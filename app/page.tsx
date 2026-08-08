@@ -1,9 +1,26 @@
 import { Sparkles } from "lucide-react";
+import { connection } from "next/server";
 
 import { EmployeeGroupDonut, FunctionBarChart, JoiningCohortChart } from "@/components/charts";
 import { MetricCard, PageHeader, Panel } from "@/components/ui";
+import { createSupabaseServerClient } from "@/utils/supabase/server";
 
-export default function OverviewPage() {
+type ExecutiveOverview = {
+  employee_records: number;
+};
+
+export default async function OverviewPage() {
+  await connection();
+
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("get_executive_overview");
+
+  if (error) {
+    throw new Error("Unable to load Executive Overview data");
+  }
+
+  const overview = data as ExecutiveOverview;
+
   return (
     <>
       <PageHeader
@@ -14,7 +31,11 @@ export default function OverviewPage() {
       />
 
       <section className="metric-grid metric-grid-four">
-        <MetricCard label="Distinct headcount" note="Counted by Personnel Number" value="100" />
+        <MetricCard
+          label="Employee records"
+          note="Counted by distinct Personnel Number"
+          value={String(overview.employee_records)}
+        />
         <MetricCard label="Direct workforce" note="44 of 100 filtered records" tone="coral" value="44%" />
         <MetricCard label="Average age" note="Derived from Birth date" tone="green" value="43.7 yrs" />
         <MetricCard label="Retirement in 5 yrs" note="Planned retirement exposure" tone="yellow" value="18" />
