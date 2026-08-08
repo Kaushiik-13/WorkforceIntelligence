@@ -76,7 +76,7 @@ export default async function OverviewPage() {
   const { data, error } = await supabase.rpc("get_executive_overview");
 
   if (error || !data) {
-    throw new Error("Unable to load Executive Overview data");
+    throw new Error("Unable to load Executive Overview");
   }
 
   const overview = data as ExecutiveOverview;
