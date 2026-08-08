@@ -87,9 +87,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
         </nav>
 
-        <div className="sidebar-status">
-          <span className="as-of">As of Aug 08, 2026</span>
-        </div>
       </aside>
 
       <main className="main-shell">
