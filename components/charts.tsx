@@ -10,9 +10,11 @@ import {
   Pie,
   PieChart,
   ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import type { TooltipContentProps } from "recharts";
 
 const colors = {
   coral: "#f06449",
@@ -50,13 +52,36 @@ const joiningData = [
   { year: "2026", value: 1 },
 ];
 
+type FunctionChartPoint = {
+  name: string;
+  percentage: number;
+  value: number;
+};
+
+function FunctionChartTooltip({ active, payload }: TooltipContentProps) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  const point = payload[0].payload as FunctionChartPoint;
+
+  return (
+    <div className="chart-tooltip">
+      <p>{point.name}</p>
+      <strong>{point.value} employees</strong>
+      <span>{point.percentage}% of the workforce</span>
+    </div>
+  );
+}
+
 export function FunctionBarChart({
   data,
 }: {
-  data: { function_name: string; employee_count: number }[];
+  data: { function_name: string; employee_count: number; percentage: number }[];
 }) {
   const chartData = data.map((item) => ({
     name: item.function_name,
+    percentage: item.percentage,
     value: item.employee_count,
   }));
 
@@ -67,6 +92,10 @@ export function FunctionBarChart({
           <CartesianGrid horizontal={false} stroke={colors.grid} strokeDasharray="3 5" />
           <XAxis {...axis} allowDecimals={false} domain={[0, "dataMax + 4"]} type="number" />
           <YAxis {...axis} dataKey="name" type="category" width={92} />
+          <Tooltip
+            content={FunctionChartTooltip}
+            cursor={{ fill: "rgba(40, 75, 99, 0.05)" }}
+          />
           <Bar animationDuration={420} dataKey="value" radius={[0, 7, 7, 0]}>
             {chartData.map((entry, index) => (
               <Cell fill={chartColors[index % chartColors.length]} key={entry.name} />

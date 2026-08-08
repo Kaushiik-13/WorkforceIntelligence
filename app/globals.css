@@ -207,6 +207,10 @@ h1, h2, h3, p { margin: 0; }
 .overview-primary-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 2.05fr) minmax(290px, 1fr); margin-bottom: 16px; }
 .overview-secondary-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 2.05fr) minmax(290px, 1fr); }
 .chart-area { width: 100%; }
+.chart-tooltip { background: var(--navy-deep); border: 1px solid rgba(255,255,255,.1); border-radius: 10px; box-shadow: 0 12px 28px rgba(30,44,48,.18); color: #fff; min-width: 150px; padding: 10px 12px; }
+.chart-tooltip p { color: #b9cbd3; font-size: 9px; font-weight: 650; letter-spacing: .04em; }
+.chart-tooltip strong { display: block; font-family: var(--font-manrope), Manrope, sans-serif; font-size: 14px; margin-top: 3px; }
+.chart-tooltip span { color: #9fb4bd; display: block; font-size: 9px; margin-top: 2px; }
 .chart-tall { height: 292px; }
 .chart-medium { height: 230px; }
 .chart-compact { height: 224px; }
