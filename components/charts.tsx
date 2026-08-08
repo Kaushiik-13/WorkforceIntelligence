@@ -52,18 +52,18 @@ const joiningData = [
   { year: "2026", value: 1 },
 ];
 
-type FunctionChartPoint = {
+type WorkforceChartPoint = {
   name: string;
   percentage: number;
   value: number;
 };
 
-function FunctionChartTooltip({ active, payload }: TooltipContentProps) {
+function WorkforceChartTooltip({ active, payload }: TooltipContentProps) {
   if (!active || !payload?.length) {
     return null;
   }
 
-  const point = payload[0].payload as FunctionChartPoint;
+  const point = payload[0].payload as WorkforceChartPoint;
 
   return (
     <div className="chart-tooltip">
@@ -93,7 +93,7 @@ export function FunctionBarChart({
           <XAxis {...axis} allowDecimals={false} domain={[0, "dataMax + 4"]} type="number" />
           <YAxis {...axis} dataKey="name" type="category" width={92} />
           <Tooltip
-            content={FunctionChartTooltip}
+            content={WorkforceChartTooltip}
             cursor={{ fill: "rgba(40, 75, 99, 0.05)" }}
           />
           <Bar animationDuration={420} dataKey="value" radius={[0, 7, 7, 0]}>
@@ -185,20 +185,25 @@ export function WorkforceStackedChart() {
 }
 
 const defaultLocationData = [
-    { name: "Jaipur", value: 26 },
-    { name: "Bengaluru", value: 22 },
-    { name: "Nashik", value: 22 },
-    { name: "Chennai", value: 15 },
-    { name: "Pune", value: 15 },
+    { name: "Jaipur", percentage: 26, value: 26 },
+    { name: "Bengaluru", percentage: 22, value: 22 },
+    { name: "Nashik", percentage: 22, value: 22 },
+    { name: "Chennai", percentage: 15, value: 15 },
+    { name: "Pune", percentage: 15, value: 15 },
 ];
 
 export function LocationBarChart({
   data,
 }: {
-  data?: { location_name: string; employee_count: number }[];
+  data?: { location_name: string; employee_count: number; percentage?: number }[];
 }) {
+  const total = data?.reduce((sum, item) => sum + item.employee_count, 0) ?? 100;
   const chartData = data
-    ? data.map((item) => ({ name: item.location_name, value: item.employee_count }))
+    ? data.map((item) => ({
+        name: item.location_name,
+        percentage: item.percentage ?? Number(((item.employee_count / total) * 100).toFixed(1)),
+        value: item.employee_count,
+      }))
     : defaultLocationData;
 
   return (
@@ -208,6 +213,10 @@ export function LocationBarChart({
           <CartesianGrid horizontal={false} stroke={colors.grid} strokeDasharray="3 5" />
           <XAxis {...axis} allowDecimals={false} domain={[0, "dataMax + 4"]} type="number" />
           <YAxis {...axis} dataKey="name" type="category" width={72} />
+          <Tooltip
+            content={WorkforceChartTooltip}
+            cursor={{ fill: "rgba(40, 75, 99, 0.05)" }}
+          />
           <Bar animationDuration={420} dataKey="value" fill={colors.coral} radius={[0, 7, 7, 0]} />
         </BarChart>
       </ResponsiveContainer>
