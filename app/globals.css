@@ -239,13 +239,15 @@ h1, h2, h3, p { margin: 0; }
 .chart-legend span { align-items: center; display: flex; gap: 6px; }
 .chart-legend.centered { justify-content: center; margin-top: -3px; }
 
-.leadership-note { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--coral); border-radius: 12px; box-shadow: var(--shadow); margin-top: 16px; padding: 16px 18px; }
-.leadership-note-heading { align-items: center; display: flex; gap: 18px; justify-content: space-between; }
-.leadership-note-heading h2 { font-family: var(--font-manrope), Manrope, sans-serif; font-size: 14px; font-weight: 650; }
-.leadership-note-heading span { color: #858984; font-size: 9px; }
-.leadership-note p { color: #727873; font-size: 11px; line-height: 1.65; margin-top: 8px; }
-.leadership-note p strong { color: var(--ink); font-weight: 700; }
-.leadership-note-watch { border-top: 1px solid var(--grid); padding-top: 8px; }
+.insight-brief-card { background: transparent; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-top: 16px; max-width: 540px; padding: 21px 22px; }
+.insight-brief-header { align-items: center; display: flex; gap: 18px; justify-content: space-between; }
+.insight-brief-header p { color: var(--coral); font-size: 9px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.insight-brief-header span { color: #858984; font-size: 8px; }
+.insight-brief-card h2 { font-family: var(--font-manrope), Manrope, sans-serif; font-size: 20px; font-weight: 650; letter-spacing: -.03em; line-height: 1.25; margin-top: 14px; }
+.insight-brief-card h3 { font-family: var(--font-manrope), Manrope, sans-serif; font-size: 13px; font-weight: 600; line-height: 1.4; }
+.insight-brief-copy { color: #6f7671; font-size: 10px; line-height: 1.65; margin-top: 7px; }
+.insight-brief-copy strong, .insight-brief-card h3 strong { color: var(--ink); font-weight: 700; }
+.insight-brief-divider { border-top: 1px solid var(--grid); margin: 18px 0; }
 .executive-heatmap-scroll { overflow-x: auto; padding-top: 18px; }
 .executive-heatmap { display: grid; gap: 7px; grid-template-columns: 80px repeat(5, minmax(58px, 1fr)); min-width: 470px; }
 .executive-heatmap > strong { color: #818581; font-size: 8px; font-weight: 700; text-align: center; text-transform: uppercase; }
@@ -436,7 +438,7 @@ h1, h2, h3, p { margin: 0; }
   .metric-grid-four, .metric-grid-three, .metric-grid-six, .metric-grid-eight, .lifecycle-grid, .warning-card-grid, .fragmentation-grid, .guide-grid, .import-type-grid, .derivation-grid { grid-template-columns: 1fr; }
   .metric-card { min-height: 154px; }
   .overview-primary-grid, .overview-secondary-grid { grid-template-columns: 1fr; }
-  .leadership-note-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .insight-brief-card { max-width: none; padding: 18px; }
   .panel { padding: 16px; }
   .chart-tall { height: 250px; }
   .chart-medium { height: 220px; }

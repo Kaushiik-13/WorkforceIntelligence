@@ -262,24 +262,26 @@ export default async function OverviewPage() {
         </Panel>
       </section>
 
-      <section className="leadership-note" aria-labelledby="leadership-note-title">
-        <div className="leadership-note-heading">
-          <h2 id="leadership-note-title">Leadership note</h2>
+      <section className="insight-brief-card" aria-labelledby="insight-brief-title">
+        <header className="insight-brief-header">
+          <p>Insight brief</p>
           <span>As of {asOfLabel}</span>
-        </div>
-        <p>
-          <strong>{insights.largest_function.function_name}</strong> is the largest function with{" "}
-          <strong>{insights.largest_function.employee_count} employees ({insights.largest_function.percentage}%)</strong>, while{" "}
-          <strong>{insights.largest_location.location_name}</strong> is the largest location at{" "}
-          <strong>{insights.largest_location.percentage}%</strong>. <strong>{insights.experienced_workforce.percentage}%</strong> of
-          employees have at least 10 years of service, and <strong>{topThreeFunctionNames}</strong> together account for{" "}
-          <strong>{supplement.top_three_function_concentration.percentage}%</strong> of the workforce.
+        </header>
+        <h2 id="insight-brief-title">{insights.largest_function.function_name} is the largest function</h2>
+        <p className="insight-brief-copy">
+          <strong>{insights.largest_function.employee_count} employees</strong>, representing{" "}
+          <strong>{insights.largest_function.percentage}%</strong> of the workforce. <strong>{insights.largest_location.location_name}</strong>{" "}
+          is the largest location at <strong>{insights.largest_location.percentage}%</strong>, while{" "}
+          <strong>{topThreeFunctionNames}</strong> together account for{" "}
+          <strong>{supplement.top_three_function_concentration.percentage}%</strong>.
         </p>
-        <p className="leadership-note-watch">
-          <strong>{supplement.recent_joiners.employee_count} employees</strong> joined in the last two years,{" "}
-          <strong>{supplement.retirement_exposure_10_years.employee_count} employees</strong> have retirement dates within the next
-          10 years, and gender representation is <strong>{genderSummary}</strong>.{" "}
-          <strong>{insights.trust_qualifier.quality_issue_records} records</strong> need data-quality review.
+
+        <div className="insight-brief-divider" />
+
+        <h3><strong>{insights.trust_qualifier.quality_issue_records} records</strong> need attention</h3>
+        <p className="insight-brief-copy">
+          <strong>{insights.trust_qualifier.quality_issue_rate}%</strong> of employee records trigger an Executive data-quality rule.
+          Review these records before using affected metrics for workforce decisions.
         </p>
       </section>
     </>
