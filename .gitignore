@@ -1,0 +1,26 @@
+# Dependencies
+/node_modules/
+
+# Next.js build output
+/.next/
+/out/
+/build/
+
+# Environment and local secrets
+.env*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Deployment and TypeScript caches
+/.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local source data and private planning document
+/data/
+/IMPLEMENTATION_PLAM.md
