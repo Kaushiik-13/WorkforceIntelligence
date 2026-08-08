@@ -75,17 +75,59 @@ type ExecutiveOverview = {
   };
 };
 
+type ExecutiveSupplement = {
+  as_of_date: string;
+  gender_balance: {
+    gender_key: string;
+    percentage: number;
+    employee_count: number;
+  }[];
+  recent_joiners: {
+    percentage: number;
+    employee_count: number;
+  };
+  retirement_exposure_10_years: {
+    percentage: number;
+    employee_count: number;
+  };
+  top_three_function_concentration: {
+    percentage: number;
+    employee_count: number;
+    function_names: string[];
+  };
+};
+
+const genderLabels: Record<string, string> = {
+  F: "Female",
+  M: "Male",
+  Unknown: "Unknown",
+};
+
+function getGenderTone(genderKey: string) {
+  if (genderKey === "F") return "coral";
+  if (genderKey === "M") return "navy";
+  return "yellow";
+}
+
 export default async function OverviewPage() {
   await connection();
 
   const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("get_executive_overview");
+  const [overviewResponse, supplementResponse] = await Promise.all([
+    supabase.rpc("get_executive_overview"),
+    supabase.rpc("get_executive_home_supplement"),
+  ]);
 
-  if (error || !data) {
+  if (overviewResponse.error || !overviewResponse.data) {
     throw new Error("Unable to load Executive Overview");
   }
 
-  const overview = data as ExecutiveOverview;
+  if (supplementResponse.error || !supplementResponse.data) {
+    throw new Error("Unable to load Executive supplemental analytics");
+  }
+
+  const overview = overviewResponse.data as ExecutiveOverview;
+  const supplement = supplementResponse.data as ExecutiveSupplement;
   const { insights, kpis } = overview;
   const asOfLabel = new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
@@ -94,6 +136,13 @@ export default async function OverviewPage() {
     year: "numeric",
   }).format(new Date(`${overview.as_of_date}T00:00:00Z`));
   const hasNearTermRetirementExposure = kpis.retirement_exposure_5_years > 0;
+  const topThreeFunctionNames = new Intl.ListFormat("en", {
+    style: "long",
+    type: "conjunction",
+  }).format(supplement.top_three_function_concentration.function_names);
+  const genderSummary = supplement.gender_balance
+    .map((item) => `${genderLabels[item.gender_key] ?? item.gender_key} ${item.percentage}%`)
+    .join(", ");
 
   return (
     <>
@@ -104,7 +153,7 @@ export default async function OverviewPage() {
         title="Workforce at a glance"
       />
 
-      <section className="metric-grid metric-grid-six">
+      <section className="metric-grid metric-grid-eight">
         <MetricCard
           label="Employee records"
           note="Counted by distinct Personnel Number"
@@ -139,6 +188,18 @@ export default async function OverviewPage() {
           tone="yellow"
           value={`${insights.experienced_workforce.percentage}%`}
         />
+        <MetricCard
+          label="Recent joiners"
+          note={`${supplement.recent_joiners.percentage}% joined within the last 2 years`}
+          tone="coral"
+          value={String(supplement.recent_joiners.employee_count)}
+        />
+        <MetricCard
+          label="Retirement in 10 yrs"
+          note={`${supplement.retirement_exposure_10_years.percentage}% fall within the 10-year horizon`}
+          tone="yellow"
+          value={String(supplement.retirement_exposure_10_years.employee_count)}
+        />
       </section>
 
       <section className="overview-primary-grid">
@@ -149,7 +210,7 @@ export default async function OverviewPage() {
         >
           <FunctionBarChart data={overview.workforce_by_function} />
         </Panel>
-        <Panel subtitle="Source-system Direct / Indirect mix" title="Employee group">
+        <Panel subtitle="Employee group and gender representation" title="Workforce mix">
           <EmployeeGroupDonut data={overview.employee_group_mix} />
           <div className="compact-legend">
             {overview.employee_group_mix.map((item, index) => (
@@ -159,6 +220,36 @@ export default async function OverviewPage() {
                 <strong>{item.percentage}%</strong>
               </div>
             ))}
+          </div>
+
+          <div className="gender-balance">
+            <div className="gender-balance-heading">
+              <strong>Gender representation</strong>
+              <span>{genderSummary}</span>
+            </div>
+            <div
+              aria-label={`Gender representation: ${genderSummary}`}
+              className="gender-balance-bar"
+              role="img"
+            >
+              {supplement.gender_balance.map((item) => (
+                <span
+                  className={getGenderTone(item.gender_key)}
+                  key={item.gender_key}
+                  style={{ width: `${item.percentage}%` }}
+                  title={`${genderLabels[item.gender_key] ?? item.gender_key}: ${item.employee_count} employees (${item.percentage}%)`}
+                />
+              ))}
+            </div>
+            <div className="gender-balance-legend">
+              {supplement.gender_balance.map((item) => (
+                <div key={item.gender_key}>
+                  <span className={`legend-dot ${getGenderTone(item.gender_key)}`} />
+                  {genderLabels[item.gender_key] ?? item.gender_key}
+                  <strong>{item.employee_count}</strong>
+                </div>
+              ))}
+            </div>
           </div>
         </Panel>
       </section>
@@ -189,7 +280,8 @@ export default async function OverviewPage() {
             <p className="executive-brief-lede">
               {insights.largest_function.function_name} is the largest function at {insights.largest_function.percentage}%.
               The workforce is spread across {kpis.location_count} locations, and {insights.experienced_workforce.percentage}%
-              of employees bring at least 10 years of service.
+              of employees bring at least 10 years of service. Together, {topThreeFunctionNames} account for
+              {` ${supplement.top_three_function_concentration.percentage}%`} of the workforce.
             </p>
           </div>
           <span className="executive-as-of">As of {asOfLabel}</span>
