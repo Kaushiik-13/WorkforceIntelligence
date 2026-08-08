@@ -112,7 +112,9 @@ export function JoiningCohortChart({ expanded = false }: { expanded?: boolean })
             animationDuration={420}
             dataKey="value"
             dot={{ fill: "#fffdf8", stroke: colors.coral, strokeWidth: 2, r: 4 }}
-            stroke="transparent"
+            stroke={colors.coral}
+            strokeWidth={2}
+            type="monotone"
           />
         </LineChart>
       </ResponsiveContainer>

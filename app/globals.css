@@ -101,19 +101,7 @@ h1, h2, h3, p { margin: 0; }
 .nav-link.active svg { color: var(--coral); }
 
 .sidebar-status { margin-top: auto; }
-.status-card {
-  align-items: flex-start;
-  background: var(--sidebar-soft);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 11px;
-  display: flex;
-  gap: 10px;
-  padding: 14px 12px;
-}
-.status-dot { background: #61d292; border-radius: 50%; box-shadow: 0 0 0 5px rgba(97,210,146,.1); flex: 0 0 auto; height: 8px; margin-top: 4px; width: 8px; }
-.status-card strong { display: block; font-size: 12px; }
-.status-card p { color: #8ea4ae; font-size: 10px; margin-top: 4px; }
-.as-of { color: #718892; display: block; font-size: 9px; margin: 13px 12px 0; }
+.as-of { color: #718892; display: block; font-size: 9px; margin: 0 12px; }
 
 .sidebar-scrim { background: rgba(11, 20, 25, .44); border: 0; display: none; inset: 0; opacity: 0; position: fixed; transition: opacity 180ms ease; z-index: 45; }
 .main-shell { margin-left: 252px; min-height: 100vh; }

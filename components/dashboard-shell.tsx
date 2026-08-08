@@ -88,13 +88,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="sidebar-status">
-          <div className="status-card">
-            <span className="status-dot" />
-            <div>
-              <strong>Live data model</strong>
-              <p>100 persistent records</p>
-            </div>
-          </div>
           <span className="as-of">As of Aug 08, 2026</span>
         </div>
       </aside>
