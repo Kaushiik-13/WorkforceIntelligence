@@ -30,13 +30,7 @@ const axis = {
   tick: { fill: colors.muted, fontSize: 11 },
 };
 
-const functionData = [
-  { name: "Sales", value: 31 },
-  { name: "Manufacturing", value: 24 },
-  { name: "IT", value: 18 },
-  { name: "Finance", value: 16 },
-  { name: "HR", value: 11 },
-];
+const chartColors = [colors.coral, colors.navy, colors.green, colors.yellow, colors.purple];
 
 const joiningData = [
   { year: "2011", value: 3 },
@@ -56,17 +50,26 @@ const joiningData = [
   { year: "2026", value: 1 },
 ];
 
-export function FunctionBarChart() {
+export function FunctionBarChart({
+  data,
+}: {
+  data: { function_name: string; employee_count: number }[];
+}) {
+  const chartData = data.map((item) => ({
+    name: item.function_name,
+    value: item.employee_count,
+  }));
+
   return (
     <div className="chart-area chart-tall">
       <ResponsiveContainer height="100%" width="100%">
-        <BarChart data={functionData} margin={{ top: 14, right: 12, bottom: 0, left: -8 }}>
-          <CartesianGrid stroke={colors.grid} strokeDasharray="3 5" vertical={false} />
-          <XAxis {...axis} dataKey="name" />
-          <YAxis {...axis} domain={[0, 32]} ticks={[0, 8, 16, 24, 32]} />
-          <Bar animationDuration={420} dataKey="value" radius={[8, 8, 0, 0]}>
-            {functionData.map((entry, index) => (
-              <Cell fill={[colors.coral, colors.navy, colors.green, colors.yellow, colors.purple][index]} key={entry.name} />
+        <BarChart data={chartData} layout="vertical" margin={{ top: 10, right: 18, bottom: 0, left: 18 }}>
+          <CartesianGrid horizontal={false} stroke={colors.grid} strokeDasharray="3 5" />
+          <XAxis {...axis} allowDecimals={false} domain={[0, "dataMax + 4"]} type="number" />
+          <YAxis {...axis} dataKey="name" type="category" width={92} />
+          <Bar animationDuration={420} dataKey="value" radius={[0, 7, 7, 0]}>
+            {chartData.map((entry, index) => (
+              <Cell fill={chartColors[index % chartColors.length]} key={entry.name} />
             ))}
           </Bar>
         </BarChart>
@@ -75,21 +78,28 @@ export function FunctionBarChart() {
   );
 }
 
-export function EmployeeGroupDonut() {
-  const data = [
-    { name: "Indirect", value: 56, color: colors.coral },
-    { name: "Direct", value: 44, color: colors.navy },
-  ];
+export function EmployeeGroupDonut({
+  data,
+}: {
+  data: { employee_group: string; employee_count: number }[];
+}) {
+  const chartData = data.map((item, index) => ({
+    name: item.employee_group,
+    value: item.employee_count,
+    color: chartColors[index % chartColors.length],
+  }));
+  const total = chartData.reduce((sum, item) => sum + item.value, 0);
+
   return (
     <div className="donut-chart">
       <ResponsiveContainer height="100%" width="100%">
         <PieChart>
-          <Pie animationDuration={420} data={data} dataKey="value" innerRadius="66%" outerRadius="86%" paddingAngle={1} stroke="none">
-            {data.map((item) => <Cell fill={item.color} key={item.name} />)}
+          <Pie animationDuration={420} data={chartData} dataKey="value" innerRadius="66%" outerRadius="86%" paddingAngle={1} stroke="none">
+            {chartData.map((item) => <Cell fill={item.color} key={item.name} />)}
           </Pie>
         </PieChart>
       </ResponsiveContainer>
-      <div className="donut-center"><strong>100</strong><span>people</span></div>
+      <div className="donut-center"><strong>{total}</strong><span>people</span></div>
     </div>
   );
 }
@@ -145,25 +155,90 @@ export function WorkforceStackedChart() {
   );
 }
 
-export function LocationBarChart() {
-  const data = [
+const defaultLocationData = [
     { name: "Jaipur", value: 26 },
     { name: "Bengaluru", value: 22 },
     { name: "Nashik", value: 22 },
     { name: "Chennai", value: 15 },
     { name: "Pune", value: 15 },
-  ];
+];
+
+export function LocationBarChart({
+  data,
+}: {
+  data?: { location_name: string; employee_count: number }[];
+}) {
+  const chartData = data
+    ? data.map((item) => ({ name: item.location_name, value: item.employee_count }))
+    : defaultLocationData;
 
   return (
     <div className="chart-area chart-tall">
       <ResponsiveContainer height="100%" width="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 10, right: 18, bottom: 0, left: 14 }}>
+        <BarChart data={chartData} layout="vertical" margin={{ top: 10, right: 18, bottom: 0, left: 14 }}>
           <CartesianGrid horizontal={false} stroke={colors.grid} strokeDasharray="3 5" />
-          <XAxis {...axis} domain={[0, 30]} ticks={[0, 10, 20, 30]} type="number" />
+          <XAxis {...axis} allowDecimals={false} domain={[0, "dataMax + 4"]} type="number" />
           <YAxis {...axis} dataKey="name" type="category" width={72} />
           <Bar animationDuration={420} dataKey="value" fill={colors.coral} radius={[0, 7, 7, 0]} />
         </BarChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+const ageBands = ["Under 25", "25-34", "35-44", "45-54", "55+"];
+const tenureBands = ["Under 2", "2-5", "6-10", "11-20", "20+"];
+
+export function AgeTenureHeatmap({
+  data,
+}: {
+  data: {
+    age_band: string;
+    tenure_band: string;
+    employee_count: number;
+    percentage: number;
+  }[];
+}) {
+  const cells = new Map(
+    data.map((item) => [`${item.age_band}|${item.tenure_band}`, item]),
+  );
+
+  let maximumCount = 0;
+  for (const item of data) {
+    maximumCount = Math.max(maximumCount, item.employee_count);
+  }
+
+  return (
+    <div className="executive-heatmap-scroll">
+      <div className="executive-heatmap">
+        <span />
+        {ageBands.map((ageBand) => <strong key={ageBand}>{ageBand}</strong>)}
+        {tenureBands.map((tenureBand) => (
+          <div className="executive-heatmap-row" key={tenureBand}>
+            <b>{tenureBand}</b>
+            {ageBands.map((ageBand) => {
+              const item = cells.get(`${ageBand}|${tenureBand}`);
+              const count = item?.employee_count ?? 0;
+              const intensity = count === 0 || maximumCount === 0
+                ? 0
+                : Math.max(1, Math.ceil((count / maximumCount) * 4));
+
+              return (
+                <span
+                  className={`heat-level-${intensity}`}
+                  key={ageBand}
+                  title={`${ageBand}, ${tenureBand} years: ${count} employees${item ? ` (${item.percentage}%)` : ""}`}
+                >
+                  {count}
+                </span>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="heatmap-legend">
+        <span>Lower</span><i className="heat-level-1" /><i className="heat-level-2" /><i className="heat-level-3" /><i className="heat-level-4" /><span>Higher</span>
+      </div>
     </div>
   );
 }
