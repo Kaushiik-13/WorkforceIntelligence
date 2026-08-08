@@ -1,10 +1,3 @@
-import {
-  BriefcaseBusiness,
-  CheckCircle2,
-  Clock3,
-  MapPin,
-  ShieldAlert,
-} from "lucide-react";
 import { connection } from "next/server";
 
 import {
@@ -135,7 +128,6 @@ export default async function OverviewPage() {
     timeZone: "UTC",
     year: "numeric",
   }).format(new Date(`${overview.as_of_date}T00:00:00Z`));
-  const hasNearTermRetirementExposure = kpis.retirement_exposure_5_years > 0;
   const topThreeFunctionNames = new Intl.ListFormat("en", {
     style: "long",
     type: "conjunction",
@@ -270,91 +262,25 @@ export default async function OverviewPage() {
         </Panel>
       </section>
 
-      <section className="executive-brief" aria-labelledby="executive-brief-title">
-        <header className="executive-brief-header">
-          <div>
-            <p className="page-eyebrow">Executive summary</p>
-            <h2 id="executive-brief-title">
-              {insights.largest_function.function_name} leads, with experience running deep
-            </h2>
-            <p className="executive-brief-lede">
-              {insights.largest_function.function_name} is the largest function at {insights.largest_function.percentage}%.
-              The workforce is spread across {kpis.location_count} locations, and {insights.experienced_workforce.percentage}%
-              of employees bring at least 10 years of service. Together, {topThreeFunctionNames} account for
-              {` ${supplement.top_three_function_concentration.percentage}%`} of the workforce.
-            </p>
-          </div>
-          <span className="executive-as-of">As of {asOfLabel}</span>
-        </header>
-
-        <div className="executive-story-grid">
-          <article className="executive-story-card">
-            <span className="executive-story-icon coral-soft">
-              <BriefcaseBusiness aria-hidden="true" size={18} />
-            </span>
-            <div>
-              <p>Workforce shape</p>
-              <h3>{insights.largest_function.function_name} leads at {insights.largest_function.percentage}%</h3>
-              <span>
-                {insights.largest_function.employee_count} employees in the largest of {kpis.function_count} functions.
-              </span>
-            </div>
-          </article>
-
-          <article className="executive-story-card">
-            <span className="executive-story-icon navy-soft">
-              <MapPin aria-hidden="true" size={18} />
-            </span>
-            <div>
-              <p>Geographic footprint</p>
-              <h3>{insights.largest_location.location_name} accounts for {insights.largest_location.percentage}%</h3>
-              <span>
-                {insights.largest_location.employee_count} employees at the largest of {kpis.location_count} locations.
-              </span>
-            </div>
-          </article>
-
-          <article className="executive-story-card">
-            <span className="executive-story-icon green-soft">
-              <Clock3 aria-hidden="true" size={18} />
-            </span>
-            <div>
-              <p>Experience and mix</p>
-              <h3>{insights.experienced_workforce.percentage}% have 10+ years</h3>
-              <span>
-                {insights.majority_employee_group.employee_group} is the majority group at {insights.majority_employee_group.percentage}%.
-              </span>
-            </div>
-          </article>
+      <section className="leadership-note" aria-labelledby="leadership-note-title">
+        <div className="leadership-note-heading">
+          <h2 id="leadership-note-title">Leadership note</h2>
+          <span>As of {asOfLabel}</span>
         </div>
-
-        <div className="executive-signal-row">
-          <div className={`executive-signal ${hasNearTermRetirementExposure ? "attention" : "positive"}`}>
-            {hasNearTermRetirementExposure
-              ? <ShieldAlert aria-hidden="true" size={18} />
-              : <CheckCircle2 aria-hidden="true" size={18} />}
-            <div>
-              <strong>
-                {hasNearTermRetirementExposure
-                  ? `${kpis.retirement_exposure_5_years} employees approach retirement`
-                  : "No near-term retirement exposure"}
-              </strong>
-              <span>
-                {hasNearTermRetirementExposure
-                  ? "These retirement dates fall within the next five years."
-                  : "No employee retirement dates fall within the next five years."}
-              </span>
-            </div>
-          </div>
-
-          <div className="executive-signal attention">
-            <ShieldAlert aria-hidden="true" size={18} />
-            <div>
-              <strong>{insights.trust_qualifier.quality_issue_records} records need review</strong>
-              <span>{insights.trust_qualifier.quality_issue_rate}% trigger an Executive data-quality rule.</span>
-            </div>
-          </div>
-        </div>
+        <p>
+          <strong>{insights.largest_function.function_name}</strong> is the largest function with{" "}
+          <strong>{insights.largest_function.employee_count} employees ({insights.largest_function.percentage}%)</strong>, while{" "}
+          <strong>{insights.largest_location.location_name}</strong> is the largest location at{" "}
+          <strong>{insights.largest_location.percentage}%</strong>. <strong>{insights.experienced_workforce.percentage}%</strong> of
+          employees have at least 10 years of service, and <strong>{topThreeFunctionNames}</strong> together account for{" "}
+          <strong>{supplement.top_three_function_concentration.percentage}%</strong> of the workforce.
+        </p>
+        <p className="leadership-note-watch">
+          <strong>{supplement.recent_joiners.employee_count} employees</strong> joined in the last two years,{" "}
+          <strong>{supplement.retirement_exposure_10_years.employee_count} employees</strong> have retirement dates within the next
+          10 years, and gender representation is <strong>{genderSummary}</strong>.{" "}
+          <strong>{insights.trust_qualifier.quality_issue_records} records</strong> need data-quality review.
+        </p>
       </section>
     </>
   );
