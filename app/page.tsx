@@ -134,10 +134,10 @@ export default async function OverviewPage() {
           value={`${kpis.average_tenure} yrs`}
         />
         <MetricCard
-          label="Retirement in 5 yrs"
-          note="Retirement date within five years"
+          label="Experienced workforce"
+          note={`${insights.experienced_workforce.employee_count} employees with 10+ years`}
           tone="yellow"
-          value={String(kpis.retirement_exposure_5_years)}
+          value={`${insights.experienced_workforce.percentage}%`}
         />
       </section>
 
