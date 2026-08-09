@@ -2,14 +2,12 @@
 
 import {
   BarChart3,
-  BookOpen,
   Building2,
   Database,
   Grid2X2,
   HeartPulse,
   Menu,
   Search,
-  ShieldCheck,
   UsersRound,
   X,
 } from "lucide-react";
@@ -22,10 +20,8 @@ const navigation = [
   { href: "/workforce", label: "Workforce", icon: UsersRound },
   { href: "/organization", label: "Organization", icon: Building2 },
   { href: "/lifecycle", label: "Lifecycle", icon: HeartPulse },
-  { href: "/quality", label: "Data quality", icon: ShieldCheck },
   { href: "/employees", label: "Employees", icon: BarChart3 },
   { href: "/data-hub", label: "Data hub", icon: Database },
-  { href: "/field-guide", label: "Field guide", icon: BookOpen },
 ];
 
 const filterOptions = {
