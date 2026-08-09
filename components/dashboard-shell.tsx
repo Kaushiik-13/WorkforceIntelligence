@@ -36,7 +36,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const pageOwnsFilters = pathname === "/workforce"
     || pathname === "/organization"
-    || pathname === "/lifecycle";
+    || pathname === "/lifecycle"
+    || pathname === "/employees";
 
   return (
     <div className="dashboard-frame">

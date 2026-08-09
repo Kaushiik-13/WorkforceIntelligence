@@ -1,33 +1,80 @@
-import type { NextRequest } from "next/server";
+import {
+  createEmployeeSchema,
+  databaseError,
+  employeeColumns,
+  toEmployeeDto,
+  toEmployeeRow,
+  validationError,
+} from "@/lib/employees";
+import { createSupabaseAdminClient } from "@/utils/supabase/server";
 
-import { createSupabaseServerClient } from "@/utils/supabase/server";
+export async function GET() {
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("employees")
+      .select(employeeColumns)
+      .order("Personnel Number", { ascending: true })
+      .limit(1000);
 
-function positiveInteger(value: string | null, fallback: number) {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+    if (error) return databaseError("Unable to load employee records.", error);
+
+    const rows = (data ?? []) as unknown as Parameters<typeof toEmployeeDto>[0][];
+
+    return Response.json(
+      { data: rows.map(toEmployeeDto), total: rows.length },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (error) {
+    console.error("Employee directory configuration failed", error);
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Unable to load employee records." },
+      { status: 500 },
+    );
+  }
 }
 
-export async function GET(request: NextRequest) {
-  const page = positiveInteger(request.nextUrl.searchParams.get("page"), 1);
-  const requestedPageSize = positiveInteger(request.nextUrl.searchParams.get("page_size"), 10);
-  const pageSize = Math.min(requestedPageSize, 50);
-  const search = (request.nextUrl.searchParams.get("search") ?? "").trim().slice(0, 100) || null;
-
-  const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("get_employee_directory", {
-    p_employee_group: request.nextUrl.searchParams.get("employee_group")?.trim() || null,
-    p_function: request.nextUrl.searchParams.get("function")?.trim() || null,
-    p_gender: request.nextUrl.searchParams.get("gender")?.trim() || null,
-    p_location: request.nextUrl.searchParams.get("location")?.trim() || null,
-    p_page: page,
-    p_page_size: pageSize,
-    p_search: search,
-  });
-
-  if (error || !data) {
-    console.error("Employee directory RPC failed", error);
-    return Response.json({ error: "Unable to load employee records." }, { status: 500 });
+export async function POST(request: Request) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "The request body must be valid JSON." }, { status: 400 });
   }
 
-  return Response.json(data, { headers: { "Cache-Control": "no-store" } });
+  const parsed = createEmployeeSchema.safeParse(body);
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data: duplicate, error: duplicateError } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("Personnel Number", parsed.data.personnel_number)
+      .maybeSingle();
+
+    if (duplicateError) return databaseError("Unable to validate the personnel number.", duplicateError);
+    if (duplicate) {
+      return Response.json({ error: "That personnel number already exists." }, { status: 409 });
+    }
+
+    const { data, error } = await supabase
+      .from("employees")
+      .insert(toEmployeeRow(parsed.data))
+      .select(employeeColumns)
+      .single();
+
+    if (error) return databaseError("Unable to create the employee record.", error);
+
+    return Response.json(
+      { data: toEmployeeDto(data as unknown as Parameters<typeof toEmployeeDto>[0]) },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error("Employee creation configuration failed", error);
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Unable to create the employee record." },
+      { status: 500 },
+    );
+  }
 }
