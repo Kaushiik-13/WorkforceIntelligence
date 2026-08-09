@@ -505,23 +505,20 @@
 .dashboard-widget .lifecycle-exposure-chart,
 .dashboard-widget .lifecycle-cohort-chart { height: 100%; min-height: 240px; }
 
-.dashboard-widget-body:has(> .chart-mode-switch) {
-  display: grid;
-  grid-template-rows: 38px minmax(0, 1fr);
+.dashboard-widget-body:has(> .chart-mode-switch) { position: static; }
+
+.dashboard-widget:not(.is-editing):has(.chart-mode-switch) .dashboard-widget-header {
+  padding-right: 116px;
 }
 
 .dashboard-widget .chart-mode-switch {
-  align-self: center;
-  justify-self: end;
-  position: static;
-  right: auto;
-  top: auto;
+  position: absolute;
+  right: 18px;
+  top: 17px;
 }
 
-.dashboard-widget .lifecycle-exposure-chart {
-  grid-row: 2;
-  min-height: 0;
-}
+.dashboard-widget.is-editing .chart-mode-switch { display: none; }
+.dashboard-widget .lifecycle-exposure-chart { min-height: 240px; }
 
 .cross-widget-coverage { display: grid; grid-template-rows: auto minmax(190px, 1fr); height: 100%; padding-top: 8px; }
 .cross-widget-coverage .organization-coverage-summary { margin-top: 0; }
