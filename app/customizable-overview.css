@@ -402,13 +402,50 @@
 .dashboard-mini-metrics .dashboard-metric strong { font-size: 19px; }
 
 .movement-metrics {
+  align-items: center;
   display: grid;
-  gap: 12px;
+  gap: 10px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding-top: 10px;
 }
 
-.movement-metrics .dashboard-metric { align-self: end; }
-.movement-metrics .dashboard-metric + .dashboard-metric { border-left: 1px solid var(--grid); padding-left: 12px; }
+.movement-metric {
+  align-items: center;
+  background: var(--surface-soft);
+  border: 1px solid #e8e4dc;
+  border-radius: 11px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 34px minmax(0, 1fr);
+  height: 100%;
+  max-height: 112px;
+  padding: 11px;
+}
+
+.movement-metric-icon {
+  align-items: center;
+  border-radius: 9px;
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.movement-metric-icon.coral { background: #fde8e2; color: var(--coral); }
+.movement-metric-icon.navy { background: #e5edf1; color: var(--navy); }
+.movement-metric .dashboard-metric strong { font-size: 25px; margin-top: 5px; }
+.movement-window-note {
+  align-items: center;
+  border-top: 1px solid var(--grid);
+  color: #858a85;
+  display: flex;
+  font-size: 8px;
+  gap: 7px;
+  grid-column: 1 / -1;
+  padding-top: 9px;
+}
+.movement-window-note span { background: #b2b6b1; border-radius: 50%; height: 3px; width: 3px; }
 .dashboard-widget.widget-chart .chart-tall { height: 100%; min-height: 210px; }
 .dashboard-widget.widget-chart .executive-heatmap-scroll { height: 100%; padding-top: 18px; }
 .dashboard-widget[data-size="large"] .executive-heatmap { gap: 9px; }
@@ -460,6 +497,25 @@
 .dashboard-insight strong { color: var(--ink); }
 .dashboard-widget[data-size="large"] .dashboard-insight { grid-template-columns: minmax(0, .8fr) repeat(2, minmax(0, 1fr)); }
 .dashboard-widget[data-size="large"] .dashboard-insight p + p { display: block; }
+.dashboard-widget.widget-story[data-size="small"] .dashboard-insight {
+  display: block;
+  padding-top: 8px;
+}
+.dashboard-widget.widget-story[data-size="small"] .dashboard-insight h3 {
+  font-size: 19px;
+  margin-top: 10px;
+  max-width: none;
+}
+.dashboard-widget.widget-story[data-size="small"] .dashboard-insight p {
+  border-left: 0;
+  border-top: 1px solid var(--grid);
+  font-size: 8px;
+  line-height: 1.45;
+  margin-top: 10px;
+  padding-left: 0;
+  padding-top: 9px;
+}
+.dashboard-widget.widget-story[data-size="small"] .dashboard-insight p + p { display: none; }
 
 .cross-widget-metric-grid {
   display: grid;

@@ -19,6 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  CalendarClock,
   Check,
   GripVertical,
   LayoutDashboard,
@@ -27,6 +28,7 @@ import {
   RotateCcw,
   Search,
   SlidersHorizontal,
+  UserPlus,
   X,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -135,7 +137,8 @@ type OverviewWidgetId =
   | "insight";
 
 const legacyStorageKey = "workforce-overview-layout-v1";
-const storageKey = "workforce-overview-layout-v2";
+const previousStorageKey = "workforce-overview-layout-v2";
+const storageKey = "workforce-overview-layout-v3";
 const overviewWidgetDefinitions = {
   "workforce-snapshot": {
     title: "Workforce snapshot",
@@ -197,8 +200,8 @@ const overviewWidgetDefinitions = {
     title: "Leadership brief",
     subtitle: "The strongest signals in the current data",
     kind: "story",
-    sizes: ["medium", "wide", "large"],
-    defaultSize: "large",
+    sizes: ["small", "medium", "wide", "large"],
+    defaultSize: "small",
     source: "Overview",
   },
 } as const satisfies Record<OverviewWidgetId, WidgetDefinition>;
@@ -223,7 +226,7 @@ const defaultLayout: WidgetLayout[] = [
   { id: "mix", size: "small", visible: true },
   { id: "age-tenure", size: "wide", visible: true },
   { id: "location", size: "small", visible: true },
-  { id: "insight", size: "large", visible: true },
+  { id: "insight", size: "small", visible: true },
 ];
 
 const initialLayout: WidgetLayout[] = [
@@ -399,9 +402,14 @@ export function CustomizableOverview({
   );
 
   useEffect(() => {
-    const savedValue = window.localStorage.getItem(storageKey)
+    const currentSavedValue = window.localStorage.getItem(storageKey);
+    const savedValue = currentSavedValue
+      ?? window.localStorage.getItem(previousStorageKey)
       ?? window.localStorage.getItem(legacyStorageKey);
-    const savedLayout = restoreLayout(savedValue);
+    const restoredLayout = restoreLayout(savedValue);
+    const savedLayout: WidgetLayout[] = currentSavedValue
+      ? restoredLayout
+      : restoredLayout.map((item): WidgetLayout => item.id === "insight" ? { ...item, size: "small" } : item);
     const frame = window.requestAnimationFrame(() => {
       setLayout(savedLayout);
       setHydrated(true);
@@ -531,18 +539,27 @@ export function CustomizableOverview({
       case "movement":
         return (
           <div className="dashboard-metric-group movement-metrics">
-            <DashboardMetric
-              label="Recent joiners"
-              note={`${supplement.recent_joiners.percentage}% joined in the last two years`}
-              value={String(supplement.recent_joiners.employee_count)}
-            />
-            <DashboardMetric
-              label="Retirement in 10 yrs"
-              note={`${supplement.retirement_exposure_10_years.percentage}% of employees`}
-              value={String(
-                supplement.retirement_exposure_10_years.employee_count,
-              )}
-            />
+            <div className="movement-metric">
+              <span className="movement-metric-icon coral"><UserPlus aria-hidden="true" size={16} /></span>
+              <DashboardMetric
+                label="Recent joiners"
+                note={`${supplement.recent_joiners.percentage}% joined in the last two years`}
+                value={String(supplement.recent_joiners.employee_count)}
+              />
+            </div>
+            <div className="movement-metric">
+              <span className="movement-metric-icon navy"><CalendarClock aria-hidden="true" size={16} /></span>
+              <DashboardMetric
+                label="Retirement in 10 yrs"
+                note={`${supplement.retirement_exposure_10_years.percentage}% of employees`}
+                value={String(
+                  supplement.retirement_exposure_10_years.employee_count,
+                )}
+              />
+            </div>
+            <p className="movement-window-note">
+              Two-year joining window <span /> Ten-year retirement window
+            </p>
           </div>
         );
       case "function":
