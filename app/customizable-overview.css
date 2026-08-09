@@ -272,6 +272,11 @@
 .dashboard-widget.widget-story[data-size="large"] { grid-row: span 4; }
 .dashboard-widget.widget-table[data-size="wide"],
 .dashboard-widget.widget-table[data-size="large"] { grid-row: span 6; }
+.dashboard-widget.widget-metric[data-size="small"]:has(.cross-widget-metric-grid) {
+  grid-row: span 2;
+  padding: 14px 16px;
+}
+.dashboard-widget.widget-metric[data-size="small"]:has(.cross-widget-metric-grid) .dashboard-widget-header { min-height: 31px; }
 
 .dashboard-widget.is-editing {
   border-color: #c8c3b8;
@@ -539,6 +544,10 @@
 .cross-widget-metric-grid p { color: #888d88; font-size: 8px; line-height: 1.35; margin-top: 4px; }
 .dashboard-widget[data-size="small"] .cross-widget-metric-grid,
 .dashboard-widget[data-size="medium"] .cross-widget-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dashboard-widget.widget-metric[data-size="small"] .cross-widget-metric-grid { padding-top: 3px; }
+.dashboard-widget.widget-metric[data-size="small"] .cross-widget-metric-grid > div { padding: 5px 10px; }
+.dashboard-widget.widget-metric[data-size="small"] .cross-widget-metric-grid strong { font-size: 18px; margin-top: 4px; }
+.dashboard-widget.widget-metric[data-size="small"] .cross-widget-metric-grid p { margin-top: 3px; }
 .dashboard-widget[data-size="small"] .cross-widget-metric-grid > div,
 .dashboard-widget[data-size="medium"] .cross-widget-metric-grid > div { border-bottom: 0; }
 .dashboard-widget[data-size="small"] .cross-widget-metric-grid > div:nth-child(odd),
@@ -645,6 +654,7 @@
   .dashboard-widget.widget-chart[data-size="small"], .dashboard-widget[data-size="medium"], .dashboard-widget[data-size="wide"] { grid-row: span 6; }
   .dashboard-widget[data-size="large"] { grid-row: span 7; }
   .dashboard-widget.widget-story[data-size="medium"], .dashboard-widget.widget-story[data-size="wide"], .dashboard-widget.widget-story[data-size="large"] { grid-row: span 5; }
+  .dashboard-widget.widget-metric[data-size="small"]:has(.cross-widget-metric-grid) { grid-row: span 3; }
   .dashboard-widget { padding: 15px; }
   .dashboard-widget-header { gap: 8px; }
   .dashboard-widget-controls span { display: none; }
