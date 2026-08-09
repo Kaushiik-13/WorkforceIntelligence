@@ -37,7 +37,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const pageOwnsFilters = pathname === "/workforce"
     || pathname === "/organization"
     || pathname === "/lifecycle"
-    || pathname === "/employees";
+    || pathname === "/employees"
+    || pathname === "/data-hub";
 
   return (
     <div className="dashboard-frame">
@@ -103,9 +104,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <Search aria-hidden="true" size={17} />
             <input aria-label="Search employees" placeholder="Search ID, role, function…" />
           </label>
-          <div className="record-summary">
-            <strong>100</strong> of 100 records
-          </div>
           <div aria-label="Workspace user" className="avatar">
             HR
           </div>
