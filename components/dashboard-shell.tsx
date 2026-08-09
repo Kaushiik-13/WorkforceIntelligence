@@ -12,8 +12,8 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { type FormEvent, type ReactNode, useState } from "react";
 
 const navigation = [
   { href: "/", label: "Overview", icon: Grid2X2 },
@@ -24,21 +24,18 @@ const navigation = [
   { href: "/data-hub", label: "Data hub", icon: Database },
 ];
 
-const filterOptions = {
-  Function: ["All", "Finance", "HR", "IT", "Manufacturing", "Sales"],
-  Location: ["All", "Bengaluru", "Chennai", "Jaipur", "Nashik", "Pune"],
-  "Employee group": ["All", "Direct", "Indirect"],
-  Gender: ["All", "F", "M"],
-};
-
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [navigationOpen, setNavigationOpen] = useState(false);
-  const pageOwnsFilters = pathname === "/workforce"
-    || pathname === "/organization"
-    || pathname === "/lifecycle"
-    || pathname === "/employees"
-    || pathname === "/data-hub";
+  const [searchQuery, setSearchQuery] = useState("");
+
+  function searchEmployees(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (!query) return;
+    router.push(`/employees?search=${encodeURIComponent(query)}`);
+  }
 
   return (
     <div className="dashboard-frame">
@@ -100,29 +97,22 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           >
             <Menu size={20} />
           </button>
-          <label className="search-box">
-            <Search aria-hidden="true" size={17} />
-            <input aria-label="Search employees" placeholder="Search ID, role, function…" />
-          </label>
+          <form aria-label="Search employee records" className="search-box" onSubmit={searchEmployees} role="search">
+            <button aria-label="Run employee search" className="global-search-submit" type="submit">
+              <Search aria-hidden="true" size={17} />
+            </button>
+            <input
+              aria-label="Search employees"
+              maxLength={80}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search ID, role, function…"
+              value={searchQuery}
+            />
+          </form>
           <div aria-label="Workspace user" className="avatar">
             HR
           </div>
         </header>
-
-        {!pageOwnsFilters ? (
-          <section aria-label="Dashboard filters" className="filterbar">
-            {Object.entries(filterOptions).map(([label, options]) => (
-              <label className="filter-control" key={label}>
-                <span>{label}</span>
-                <select aria-label={label} defaultValue="All">
-                  {options.map((option) => (
-                    <option key={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
-            ))}
-          </section>
-        ) : null}
 
         <div className="page-canvas" key={pathname}>
           {children}

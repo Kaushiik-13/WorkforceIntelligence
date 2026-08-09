@@ -203,7 +203,7 @@ function DirectoryFilterSelect({
   );
 }
 
-export function EmployeeExplorer() {
+export function EmployeeExplorer({ initialSearch = "" }: { initialSearch?: string }) {
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
   const [directoryFilters, setDirectoryFilters] = useState<DirectoryFilters>(emptyDirectoryFilters);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -215,7 +215,7 @@ export function EmployeeExplorer() {
   const [notice, setNotice] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [saving, setSaving] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
   const [showEditor, setShowEditor] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -257,7 +257,8 @@ export function EmployeeExplorer() {
     return employees.filter((employee) => {
       const matchesSearch = !normalizedSearch
         || employee.personnel_number?.toLocaleLowerCase().includes(normalizedSearch)
-        || employee.designation?.toLocaleLowerCase().includes(normalizedSearch);
+        || employee.designation?.toLocaleLowerCase().includes(normalizedSearch)
+        || employee.function_name?.toLocaleLowerCase().includes(normalizedSearch);
       return matchesSearch
         && (!directoryFilters.functionName || employee.function_name === directoryFilters.functionName)
         && (!directoryFilters.location || employee.location_name === directoryFilters.location)
@@ -386,14 +387,14 @@ export function EmployeeExplorer() {
         <div className="workforce-filter-heading">
           <div>
             <strong>Find employee records</strong>
-            <span>Search by personnel number or designation.</span>
+            <span>Search by personnel number, designation, or function.</span>
           </div>
           <p><strong>{filteredEmployees.length}</strong> records found</p>
         </div>
         <div className="employee-filter-grid">
           <label className="employee-search-control">
             <span>Search</span>
-            <div><Search aria-hidden="true" size={14} /><input onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Personnel number or designation" value={search} /></div>
+            <div><Search aria-hidden="true" size={14} /><input onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Personnel number, designation, or function" value={search} /></div>
           </label>
           <div className="employee-search-actions">
             {search ? <button className="action-button" onClick={() => { setSearch(""); setPage(1); }} type="button"><RotateCcw aria-hidden="true" size={13} />Clear search</button> : null}

@@ -1,7 +1,14 @@
 import { EmployeeExplorer } from "@/components/employee-explorer";
 import { PageHeader } from "@/components/ui";
 
-export default function EmployeesPage() {
+export default async function EmployeesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string | string[] }>;
+}) {
+  const rawSearch = (await searchParams).search;
+  const initialSearch = Array.isArray(rawSearch) ? rawSearch[0] ?? "" : rawSearch ?? "";
+
   return (
     <>
       <PageHeader
@@ -9,7 +16,7 @@ export default function EmployeesPage() {
         eyebrow="Employee explorer"
         title="Find and inspect records"
       />
-      <EmployeeExplorer />
+      <EmployeeExplorer initialSearch={initialSearch.slice(0, 80)} key={initialSearch} />
     </>
   );
 }
