@@ -1,29 +1,480 @@
-import { GenderDonut, WorkforceStackedChart } from "@/components/charts";
-import { PageHeader, Panel } from "@/components/ui";
+import Link from "next/link";
+import { connection } from "next/server";
 
-export default function WorkforcePage() {
+import { FunctionBarChart } from "@/components/charts";
+import {
+  DesignationBarChart,
+  EmployeeGroupByFunctionChart,
+  GenderByFunctionChart,
+} from "@/components/workforce-charts";
+import { MetricCard, PageHeader, Panel } from "@/components/ui";
+import { createSupabaseServerClient } from "@/utils/supabase/server";
+
+type CountShare = {
+  employee_count: number;
+  percentage: number;
+};
+
+type WorkforceComposition = {
+  as_of_date: string;
+  applied_filters: {
+    designation: string | null;
+    employee_group: string | null;
+    function: string | null;
+    gender: string | null;
+    location: string | null;
+  };
+  record_counts: {
+    filtered_records: number;
+    total_records: number;
+  };
+  filter_options: {
+    designations: string[];
+    employee_groups: string[];
+    functions: string[];
+    genders: string[];
+    locations: string[];
+  };
+  kpis: {
+    distinct_designations: number;
+    employee_group_mix: (CountShare & { employee_group: string })[];
+    functions_represented: number;
+    gender_representation: (CountShare & { gender_key: string })[];
+    largest_designation: (CountShare & { designation: string }) | null;
+    largest_function: (CountShare & { function_name: string }) | null;
+    unclassified_records: number;
+  };
+  function_distribution: (CountShare & { function_name: string })[];
+  designation_mix: (CountShare & { designation: string })[];
+  gender_by_function: (CountShare & {
+    function_name: string;
+    function_total: number;
+    gender_key: string;
+  })[];
+  employee_group_by_function: (CountShare & {
+    employee_group: string;
+    function_name: string;
+    function_total: number;
+  })[];
+  function_location_matrix: {
+    employee_count: number;
+    function_name: string;
+    function_percentage: number;
+    location_name: string;
+    location_percentage: number;
+  }[];
+  role_breadth_by_function: {
+    distinct_designations: number;
+    dominant_designation: string;
+    dominant_designation_count: number;
+    dominant_designation_percentage: number;
+    employee_count: number;
+    function_name: string;
+  }[];
+  code_distributions: (CountShare & {
+    code_type: string;
+    code_value: string;
+  })[];
+  composition_completeness: {
+    field_name: string;
+    missing_count: number;
+    percentage: number;
+  }[];
+  insights: {
+    highest_direct_share: (CountShare & {
+      function_name: string;
+      function_total: number;
+    }) | null;
+    highest_role_concentration: {
+      dominant_designation: string;
+      dominant_designation_count: number;
+      dominant_designation_percentage: number;
+      function_name: string;
+    } | null;
+    largest_gender_variance: {
+      difference_percentage_points: number;
+      f_employee_count: number;
+      f_percentage: number;
+      function_name: string;
+      function_total: number;
+      overall_f_percentage: number;
+    } | null;
+    top_three_function_concentration: CountShare & {
+      function_names: string[];
+    };
+    unclassified_records: CountShare;
+  };
+};
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+const filterDefinitions = [
+  { key: "function", label: "Function", optionKey: "functions" },
+  { key: "location", label: "Location", optionKey: "locations" },
+  { key: "employee_group", label: "Employee group", optionKey: "employee_groups" },
+  { key: "gender", label: "Gender", optionKey: "genders" },
+  { key: "designation", label: "Designation", optionKey: "designations" },
+] as const;
+
+function firstValue(value: string | string[] | undefined) {
+  if (Array.isArray(value)) return value[0] || null;
+  return value || null;
+}
+
+function heatLevel(value: number, maximum: number) {
+  if (value === 0 || maximum === 0) return "heat-level-0";
+  const ratio = value / maximum;
+  if (ratio <= 0.25) return "heat-level-1";
+  if (ratio <= 0.5) return "heat-level-2";
+  if (ratio <= 0.75) return "heat-level-3";
+  return "heat-level-4";
+}
+
+function formatAsOfDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
+export default async function WorkforcePage({ searchParams }: { searchParams: SearchParams }) {
+  await connection();
+
+  const params = await searchParams;
+  const filters = {
+    designation: firstValue(params.designation),
+    employeeGroup: firstValue(params.employee_group),
+    functionName: firstValue(params.function),
+    gender: firstValue(params.gender),
+    location: firstValue(params.location),
+  };
+
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("get_workforce_composition", {
+    p_designation: filters.designation,
+    p_employee_group: filters.employeeGroup,
+    p_function: filters.functionName,
+    p_gender: filters.gender,
+    p_location: filters.location,
+  });
+
+  if (error || !data) {
+    throw new Error("Unable to load Workforce Composition");
+  }
+
+  const workforce = data as WorkforceComposition;
+  const { insights, kpis, record_counts: counts } = workforce;
+  const activeFilters = Object.entries(workforce.applied_filters).filter(([, value]) => value);
+  const female = kpis.gender_representation.find((item) => item.gender_key === "F");
+  const male = kpis.gender_representation.find((item) => item.gender_key === "M");
+  const leadingGroup = kpis.employee_group_mix[0];
+  const functions = workforce.function_distribution.map((item) => item.function_name);
+  const locations = workforce.filter_options.locations;
+  const matrix = new Map(
+    workforce.function_location_matrix.map((item) => [
+      `${item.function_name}::${item.location_name}`,
+      item,
+    ]),
+  );
+  const maximumMatrixCount = Math.max(
+    0,
+    ...workforce.function_location_matrix.map((item) => item.employee_count),
+  );
+  const codeGroups = Map.groupBy(workforce.code_distributions, (item) => item.code_type);
+
   return (
     <>
       <PageHeader
-        description="Compare functions, locations, employee groups, roles, and gender representation."
-        eyebrow="Composition"
-        title="How the workforce is shaped"
+        action={
+          <div className="live-pill">
+            <span />
+            {counts.filtered_records} of {counts.total_records} employees
+          </div>
+        }
+        description="Compare representation, work classification, roles, and organizational spread across the employee master."
+        eyebrow="Workforce composition"
+        title="Who makes up the workforce"
       />
-      <section className="workforce-grid">
-        <Panel subtitle="Useful as a source classification; confirm company rules before interpreting operations" title="Direct / Indirect by function">
-          <WorkforceStackedChart />
-          <div className="chart-legend centered">
-            <span><i className="legend-dot coral" />Direct</span>
-            <span><i className="legend-dot navy" />Indirect</span>
+
+      <form className="workforce-filter-form" method="get">
+        <div className="workforce-filter-heading">
+          <div>
+            <strong>Refine this view</strong>
+            <span>Every metric and visual below uses the same selected population.</span>
+          </div>
+          <p>
+            <strong>{counts.filtered_records}</strong> of {counts.total_records} records
+          </p>
+        </div>
+        <div className="workforce-filter-grid">
+          {filterDefinitions.map((filter) => {
+            const currentValue =
+              filter.key === "employee_group"
+                ? filters.employeeGroup
+                : filter.key === "function"
+                  ? filters.functionName
+                  : filters[filter.key];
+
+            return (
+              <label className="workforce-filter-control" key={filter.key}>
+                <span>{filter.label}</span>
+                <select defaultValue={currentValue ?? ""} name={filter.key}>
+                  <option value="">All</option>
+                  {workforce.filter_options[filter.optionKey].map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            );
+          })}
+          <div className="workforce-filter-actions">
+            <button className="action-button primary" type="submit">
+              Apply filters
+            </button>
+            <Link className="action-button" href="/workforce">
+              Reset
+            </Link>
+          </div>
+        </div>
+        {activeFilters.length > 0 ? (
+          <div className="workforce-active-filters">
+            <span>Active</span>
+            {activeFilters.map(([key, value]) => (
+              <b key={key}>{key.replaceAll("_", " ")}: {value}</b>
+            ))}
+          </div>
+        ) : null}
+      </form>
+
+      <section className="metric-grid metric-grid-eight workforce-metrics">
+        <MetricCard
+          label="Employees in scope"
+          note={`${counts.filtered_records === counts.total_records ? "Entire" : "Filtered"} employee population`}
+          value={String(counts.filtered_records)}
+        />
+        <MetricCard
+          label="Largest function"
+          note={kpis.largest_function ? `${kpis.largest_function.employee_count} employees in this view` : "No classified records"}
+          tone="coral"
+          value={kpis.largest_function ? `${kpis.largest_function.function_name} · ${kpis.largest_function.percentage}%` : "—"}
+        />
+        <MetricCard
+          label="Largest designation"
+          note={kpis.largest_designation ? `${kpis.largest_designation.employee_count} employees share this role` : "No classified records"}
+          tone="green"
+          value={kpis.largest_designation ? `${kpis.largest_designation.designation} · ${kpis.largest_designation.percentage}%` : "—"}
+        />
+        <MetricCard
+          label="Gender representation"
+          note={`${female?.employee_count ?? 0} F · ${male?.employee_count ?? 0} M`}
+          tone="yellow"
+          value={female ? `${female.percentage}% F` : "—"}
+        />
+        <MetricCard
+          label="Employee group mix"
+          note={kpis.employee_group_mix.map((item) => `${item.employee_count} ${item.employee_group}`).join(" · ")}
+          tone="coral"
+          value={leadingGroup ? `${leadingGroup.percentage}% ${leadingGroup.employee_group}` : "—"}
+        />
+        <MetricCard
+          label="Distinct designations"
+          note="Nonblank roles represented in this view"
+          tone="green"
+          value={String(kpis.distinct_designations)}
+        />
+        <MetricCard
+          label="Functions represented"
+          note="Functions remaining after filters"
+          value={String(kpis.functions_represented)}
+        />
+        <MetricCard
+          label="Unclassified records"
+          note="Missing function, group, gender, or designation"
+          tone={kpis.unclassified_records > 0 ? "yellow" : "green"}
+          value={String(kpis.unclassified_records)}
+        />
+      </section>
+
+      <section className="workforce-primary-grid">
+        <Panel
+          badge="100% within function"
+          subtitle="F and M source codes shown as a share of each function"
+          title="Gender representation by function"
+        >
+          <GenderByFunctionChart data={workforce.gender_by_function} />
+        </Panel>
+        <Panel
+          badge="100% within function"
+          subtitle="Direct and Indirect classification within each function"
+          title="Employee group by function"
+        >
+          <EmployeeGroupByFunctionChart data={workforce.employee_group_by_function} />
+        </Panel>
+      </section>
+
+      <section className="workforce-secondary-grid">
+        <Panel
+          badge={`${kpis.functions_represented} functions`}
+          subtitle="Employee count and share of the current population"
+          title="Function distribution"
+        >
+          <FunctionBarChart data={workforce.function_distribution} />
+        </Panel>
+        <Panel
+          badge={`${kpis.distinct_designations} roles`}
+          subtitle="Ranked designation mix in the current population"
+          title="Designation distribution"
+        >
+          <DesignationBarChart data={workforce.designation_mix} />
+        </Panel>
+      </section>
+
+      <Panel
+        badge="Count in each cell"
+        className="workforce-heatmap-panel"
+        subtitle="Read across a function or down a location to spot concentration"
+        title="Function × location footprint"
+      >
+        <div className="workforce-heatmap-scroll">
+          <div
+            className="workforce-location-heatmap"
+            style={{
+              gridTemplateColumns: `110px repeat(${locations.length}, minmax(72px, 1fr))`,
+              minWidth: `${110 + locations.length * 82}px`,
+            }}
+          >
+            <strong />
+            {locations.map((location) => <strong key={location}>{location}</strong>)}
+            {functions.map((functionName) => (
+              <div className="workforce-heatmap-row" key={functionName}>
+                <b>{functionName}</b>
+                {locations.map((location) => {
+                  const item = matrix.get(`${functionName}::${location}`);
+                  const employeeCount = item?.employee_count ?? 0;
+                  return (
+                    <span
+                      className={heatLevel(employeeCount, maximumMatrixCount)}
+                      key={location}
+                      title={`${functionName} in ${location}: ${employeeCount} employees · ${item?.function_percentage ?? 0}% of function · ${item?.location_percentage ?? 0}% of location`}
+                    >
+                      {employeeCount}
+                    </span>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="heatmap-legend">
+          <span>Lower</span>
+          <i className="heat-level-1" />
+          <i className="heat-level-2" />
+          <i className="heat-level-3" />
+          <i className="heat-level-4" />
+          <span>Higher</span>
+        </div>
+      </Panel>
+
+      <section className="workforce-detail-grid">
+        <Panel
+          subtitle="Role variety and the leading designation within each function"
+          title="Role breadth by function"
+        >
+          <div className="table-scroll">
+            <table className="data-table workforce-role-table">
+              <thead>
+                <tr>
+                  <th>Function</th>
+                  <th>Employees</th>
+                  <th>Roles</th>
+                  <th>Largest role</th>
+                  <th>Share</th>
+                </tr>
+              </thead>
+              <tbody>
+                {workforce.role_breadth_by_function.map((item) => (
+                  <tr key={item.function_name}>
+                    <td><strong>{item.function_name}</strong></td>
+                    <td>{item.employee_count}</td>
+                    <td>{item.distinct_designations}</td>
+                    <td>{item.dominant_designation} ({item.dominant_designation_count})</td>
+                    <td>{item.dominant_designation_percentage}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </Panel>
-        <Panel subtitle="Aggregated F / M values from the source" title="Gender representation">
-          <GenderDonut />
-          <div className="compact-legend">
-            <div><span className="legend-dot coral" />Male <strong>52</strong></div>
-            <div><span className="legend-dot navy" />Female <strong>48</strong></div>
+
+        <Panel
+          subtitle="Missing values in the fields used by this page"
+          title="Composition completeness"
+        >
+          <div className="workforce-completeness-list">
+            {workforce.composition_completeness.map((item) => (
+              <div key={item.field_name}>
+                <span>{item.field_name}</span>
+                <strong>{item.missing_count}</strong>
+                <p>{item.percentage}% missing</p>
+                <i><b style={{ width: `${Math.min(item.percentage, 100)}%` }} /></i>
+              </div>
+            ))}
           </div>
         </Panel>
+      </section>
+
+      <Panel
+        className="workforce-code-panel"
+        subtitle="Source-code categories are descriptive until business definitions are confirmed"
+        title="Workforce code distributions"
+      >
+        <div className="workforce-code-grid">
+          {[...codeGroups.entries()].map(([codeType, rows]) => (
+            <article key={codeType}>
+              <h3>{codeType}</h3>
+              {rows.map((row) => (
+                <div className="workforce-code-row" key={`${row.code_type}-${row.code_value}`}>
+                  <span>{row.code_value}</span>
+                  <i><b style={{ width: `${row.percentage}%` }} /></i>
+                  <strong>{row.employee_count}</strong>
+                  <small>{row.percentage}%</small>
+                </div>
+              ))}
+            </article>
+          ))}
+        </div>
+      </Panel>
+
+      <section className="insight-brief-card workforce-insight-brief">
+        <div className="insight-brief-header">
+          <p>Composition note</p>
+          <span>As of {formatAsOfDate(workforce.as_of_date)}</span>
+        </div>
+        <div className="workforce-insight-copy">
+          {insights.highest_direct_share ? (
+            <p>
+              <strong>{insights.highest_direct_share.function_name}</strong> has the highest Direct share at{" "}
+              <strong>{insights.highest_direct_share.percentage}%</strong> ({insights.highest_direct_share.employee_count} of {insights.highest_direct_share.function_total}).
+            </p>
+          ) : null}
+          {insights.largest_gender_variance ? (
+            <p>
+              <strong>{insights.largest_gender_variance.function_name}</strong> has the largest F-code variance: <strong>{insights.largest_gender_variance.f_percentage}%</strong>, {insights.largest_gender_variance.difference_percentage_points} points from the filtered average.
+            </p>
+          ) : null}
+          {insights.highest_role_concentration ? (
+            <p>
+              Role concentration is highest in <strong>{insights.highest_role_concentration.function_name}</strong>, where <strong>{insights.highest_role_concentration.dominant_designation}</strong> represents {insights.highest_role_concentration.dominant_designation_percentage}%.
+            </p>
+          ) : null}
+          <p>
+            The top three functions account for <strong>{insights.top_three_function_concentration.percentage}%</strong> of employees, while <strong>{insights.unclassified_records.employee_count}</strong> records are unclassified.
+          </p>
+        </div>
       </section>
     </>
   );

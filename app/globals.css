@@ -257,8 +257,59 @@ h1, h2, h3, p { margin: 0; }
 .executive-heatmap-row span:hover { box-shadow: 0 7px 18px rgba(30,44,48,.12); transform: translateY(-2px); }
 .heat-level-0 { background: #f2f0eb; color: #a5a8a3; }.heat-level-1 { background: #f4e7e3; color: #95665d; }.heat-level-2 { background: #f8cfc6; color: #8f493b; }.heat-level-3 { background: #f49a86; color: #71362b; }.heat-level-4 { background: var(--coral); color: #fff; }
 
-.workforce-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); }
-.workforce-grid .panel { min-height: 365px; }
+.workforce-filter-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; padding: 17px 19px; }
+.workforce-filter-heading { align-items: flex-end; display: flex; justify-content: space-between; margin-bottom: 14px; }
+.workforce-filter-heading > div strong { display: block; font-family: var(--font-manrope), Manrope, sans-serif; font-size: 14px; font-weight: 600; }
+.workforce-filter-heading > div span { color: var(--muted); display: block; font-size: 9px; margin-top: 3px; }
+.workforce-filter-heading > p { color: #858984; font-size: 9px; }
+.workforce-filter-heading > p strong { color: var(--ink); font-size: 13px; }
+.workforce-filter-grid { align-items: end; display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(105px, 1fr)) auto; }
+.workforce-filter-control { display: grid; gap: 5px; }
+.workforce-filter-control > span { color: #838883; font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.workforce-filter-control select { appearance: auto; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 9px; font-size: 10px; font-weight: 600; height: 39px; outline: 0; padding: 0 9px; width: 100%; }
+.workforce-filter-control select:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(40,75,99,.1); }
+.workforce-filter-actions { display: flex; gap: 7px; }
+.workforce-filter-actions .action-button { justify-content: center; white-space: nowrap; }
+.workforce-active-filters { align-items: center; border-top: 1px solid var(--grid); display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; padding-top: 12px; }
+.workforce-active-filters > span { color: #8a8e89; font-size: 8px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.workforce-active-filters b { background: #f1eee7; border-radius: 99px; color: #59605d; font-size: 8px; font-weight: 600; padding: 5px 8px; text-transform: capitalize; }
+.workforce-metrics .metric-card strong { font-size: 24px; }
+.workforce-primary-grid, .workforce-secondary-grid, .workforce-detail-grid { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 16px; }
+.workforce-primary-grid .panel, .workforce-secondary-grid .panel { min-height: 375px; }
+.composition-tooltip > div { border-top: 1px solid rgba(255,255,255,.14); margin-top: 8px; padding-top: 6px; }
+.composition-tooltip span { align-items: center; display: flex; gap: 6px; }
+.composition-tooltip span i { border-radius: 50%; height: 6px; width: 6px; }
+.workforce-heatmap-panel { margin-bottom: 16px; }
+.workforce-heatmap-scroll { overflow-x: auto; padding-top: 18px; }
+.workforce-location-heatmap { display: grid; gap: 7px; }
+.workforce-location-heatmap > strong { color: #818581; font-size: 8px; font-weight: 700; overflow: hidden; text-align: center; text-overflow: ellipsis; text-transform: uppercase; }
+.workforce-heatmap-row { display: contents; }
+.workforce-heatmap-row b { align-items: center; color: #616966; display: flex; font-size: 9px; font-weight: 650; }
+.workforce-heatmap-row span { align-items: center; border-radius: 8px; display: flex; font-family: var(--font-manrope), Manrope, sans-serif; font-size: 11px; font-weight: 650; height: 42px; justify-content: center; transition: transform 160ms ease, box-shadow 160ms ease; }
+.workforce-heatmap-row span:hover { box-shadow: 0 7px 18px rgba(30,44,48,.12); transform: translateY(-2px); }
+.workforce-role-table { min-width: 590px; }
+.workforce-role-table td:first-child { color: var(--ink); }
+.workforce-completeness-list { display: grid; gap: 9px; margin-top: 17px; }
+.workforce-completeness-list > div { align-items: center; background: var(--surface-soft); border: 1px solid #e8e5de; border-radius: 10px; display: grid; grid-template-columns: minmax(100px, 1fr) auto auto; padding: 11px 12px; }
+.workforce-completeness-list span { color: #59615e; font-size: 10px; font-weight: 650; }
+.workforce-completeness-list strong { font-family: var(--font-manrope), Manrope, sans-serif; font-size: 16px; }
+.workforce-completeness-list p { color: #858984; font-size: 8px; margin-left: 7px; }
+.workforce-completeness-list i { background: #e8e5de; border-radius: 99px; display: block; grid-column: 1 / -1; height: 4px; margin-top: 8px; overflow: hidden; }
+.workforce-completeness-list i b { background: var(--coral); border-radius: inherit; display: block; height: 100%; min-width: 0; }
+.workforce-code-panel { margin-bottom: 16px; }
+.workforce-code-grid { display: grid; gap: 22px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 19px; }
+.workforce-code-grid article { min-width: 0; }
+.workforce-code-grid h3 { border-bottom: 1px solid var(--grid); font-family: var(--font-manrope), Manrope, sans-serif; font-size: 11px; font-weight: 650; margin-bottom: 8px; padding-bottom: 8px; }
+.workforce-code-row { align-items: center; display: grid; gap: 7px; grid-template-columns: minmax(72px, 1fr) minmax(50px, 1.2fr) 24px 34px; min-height: 28px; }
+.workforce-code-row > span { color: #626966; font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workforce-code-row > i { background: #e9e6e0; border-radius: 99px; display: block; height: 5px; overflow: hidden; }
+.workforce-code-row > i b { background: var(--navy); border-radius: inherit; display: block; height: 100%; }
+.workforce-code-row > strong { font-size: 9px; text-align: right; }
+.workforce-code-row > small { color: #92958f; font-size: 8px; text-align: right; }
+.workforce-insight-brief { max-width: none; }
+.workforce-insight-copy { border-top: 1px solid var(--grid); display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 15px; padding-top: 15px; }
+.workforce-insight-copy p { color: #6f7671; font-size: 10px; line-height: 1.65; }
+.workforce-insight-copy strong { color: var(--ink); }
 
 .organization-primary-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, .92fr) minmax(480px, 1.55fr); margin-bottom: 16px; }
 .organization-primary-grid .panel { min-height: 365px; }
@@ -405,10 +456,11 @@ h1, h2, h3, p { margin: 0; }
 
 @media (max-width: 1180px) {
   .metric-grid-four, .metric-grid-six, .metric-grid-eight { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .overview-primary-grid, .overview-secondary-grid, .workforce-grid, .organization-primary-grid, .organization-secondary-grid, .quality-summary-grid, .import-grid { grid-template-columns: 1fr; }
+  .overview-primary-grid, .overview-secondary-grid, .workforce-primary-grid, .workforce-secondary-grid, .workforce-detail-grid, .organization-primary-grid, .organization-secondary-grid, .quality-summary-grid, .import-grid { grid-template-columns: 1fr; }
+  .workforce-filter-grid { grid-template-columns: repeat(3, minmax(120px, 1fr)); }
+  .workforce-code-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lifecycle-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .lifecycle-trend, .demo-panel { max-width: 100%; }
-  .workforce-grid .panel { min-height: 350px; }
 }
 
 @media (max-width: 900px) {
@@ -450,6 +502,10 @@ h1, h2, h3, p { margin: 0; }
   .warning-progress, .warning-card em { margin-left: 0; }
   .employee-panel { min-height: 0; }
   .action-button { min-height: 37px; }
+  .workforce-filter-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .workforce-filter-grid { grid-template-columns: 1fr; }
+  .workforce-filter-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workforce-code-grid, .workforce-insight-copy { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -111,18 +111,20 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <section aria-label="Dashboard filters" className="filterbar">
-          {Object.entries(filterOptions).map(([label, options]) => (
-            <label className="filter-control" key={label}>
-              <span>{label}</span>
-              <select aria-label={label} defaultValue="All">
-                {options.map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            </label>
-          ))}
-        </section>
+        {pathname !== "/workforce" ? (
+          <section aria-label="Dashboard filters" className="filterbar">
+            {Object.entries(filterOptions).map(([label, options]) => (
+              <label className="filter-control" key={label}>
+                <span>{label}</span>
+                <select aria-label={label} defaultValue="All">
+                  {options.map((option) => (
+                    <option key={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </section>
+        ) : null}
 
         <div className="page-canvas" key={pathname}>
           {children}
