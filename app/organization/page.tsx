@@ -1,106 +1,363 @@
-import { AlertTriangle, Network, UsersRound } from "lucide-react";
+import { AlertTriangle, Network } from "lucide-react";
+import Link from "next/link";
+import { connection } from "next/server";
 
 import { LocationBarChart } from "@/components/charts";
+import { HrbpWorkloadChart } from "@/components/organization-charts";
 import { MetricCard, PageHeader, Panel } from "@/components/ui";
+import { createSupabaseServerClient } from "@/utils/supabase/server";
 
-const locationMatrix = [
-  { function: "Sales", values: [6, 5, 8, 7, 5] },
-  { function: "HR", values: [5, 1, 10, 3, 4] },
-  { function: "Manufacturing", values: [6, 4, 2, 6, 3] },
-  { function: "Finance", values: [2, 4, 4, 2, 2] },
-  { function: "IT", values: [3, 1, 2, 4, 1] },
-];
+type OrganizationOverview = {
+  applied_filters: {
+    function: string | null;
+    location: string | null;
+  };
+  filter_options: {
+    functions: string[];
+    locations: string[];
+  };
+  record_counts: {
+    filtered_records: number;
+    total_records: number;
+  };
+  kpis: {
+    assignment_gaps: number;
+    average_primary_hrbp_workload: number | null;
+    locations: number;
+    organizational_units: number;
+    primary_hrbps: number;
+    secondary_hrbps: number;
+    unique_hrbp_pairs: number;
+  };
+  workload_statistics: {
+    average: number | null;
+    coefficient_of_variation: number | null;
+    maximum: number | null;
+    median: number | null;
+    minimum: number | null;
+  };
+  location_distribution: {
+    employee_count: number;
+    location_name: string;
+    percentage: number;
+  }[];
+  function_location_matrix: {
+    employee_count: number;
+    function_name: string;
+    function_percentage: number;
+    location_name: string;
+    location_percentage: number;
+  }[];
+  hrbp_workload: {
+    employee_count: number;
+    hrbp_label: string;
+  }[];
+  hrbp_breadth: {
+    employee_count: number;
+    function_count: number;
+    hrbp_label: string;
+    location_count: number;
+  }[];
+  organization_fragmentation: {
+    distinct_values: number;
+    field_name: string;
+    fragmentation_percentage: number;
+  }[];
+  insights: {
+    assignment_gaps: number;
+    broadest_hrbp: {
+      employee_count: number;
+      function_count: number;
+      hrbp_label: string;
+      location_count: number;
+    } | null;
+    hrbp_workload: {
+      average: number | null;
+      maximum: number | null;
+      median: number | null;
+      minimum: number | null;
+    };
+    largest_location: {
+      employee_count: number;
+      location_name: string;
+      percentage: number;
+    } | null;
+    strongest_site_specialization: {
+      employee_count: number;
+      function_name: string;
+      location_name: string;
+      location_total: number;
+      percentage: number;
+    } | null;
+  };
+};
 
-const locations = ["Bengaluru", "Chennai", "Jaipur", "Nashik", "Pune"];
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-const codeCards = [
-  { label: "Organizational units", value: 96, note: "96 distinct codes across 100 records" },
-  { label: "PA codes", value: 99, note: "99 distinct codes across 100 records" },
-  { label: "Cost centres", value: 100, note: "Every record has a different code" },
-];
-
-const hrbpRows = [
-  { assignment: "Primary HRBP", distinct: 68, average: "1.5", maximum: 4 },
-  { assignment: "Secondary HRBP", distinct: 69, average: "1.4", maximum: 5 },
-  { assignment: "Primary-secondary pairs", distinct: 99, average: "1.0", maximum: 2 },
-];
-
-function heatTone(value: number) {
-  if (value >= 8) return "heat-strong";
-  if (value >= 5) return "heat-medium";
-  if (value >= 3) return "heat-light";
-  return "heat-faint";
+function firstValue(value: string | string[] | undefined) {
+  if (Array.isArray(value)) return value[0] || null;
+  return value || null;
 }
 
-export default function OrganizationPage() {
+function heatTone(value: number, maximum: number) {
+  if (value === 0 || maximum === 0) return "heat-level-0";
+  const ratio = value / maximum;
+  if (ratio <= 0.25) return "heat-level-1";
+  if (ratio <= 0.5) return "heat-level-2";
+  if (ratio <= 0.75) return "heat-level-3";
+  return "heat-level-4";
+}
+
+export default async function OrganizationPage({ searchParams }: { searchParams: SearchParams }) {
+  await connection();
+
+  const params = await searchParams;
+  const filters = {
+    functionName: firstValue(params.function),
+    location: firstValue(params.location),
+  };
+
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("get_organization_overview", {
+    p_function: filters.functionName,
+    p_location: filters.location,
+  });
+
+  if (error || !data) {
+    throw new Error("Unable to load Organization & Location");
+  }
+
+  const organization = data as OrganizationOverview;
+  const { insights, kpis, record_counts: counts } = organization;
+  const activeFilters = Object.entries(organization.applied_filters).filter(([, value]) => value);
+  const matrixFunctions = [...new Set(organization.function_location_matrix.map((item) => item.function_name))];
+  const matrixLocations = [...new Set(organization.function_location_matrix.map((item) => item.location_name))];
+  const matrix = new Map(
+    organization.function_location_matrix.map((item) => [
+      `${item.function_name}::${item.location_name}`,
+      item,
+    ]),
+  );
+  const maximumMatrixCount = Math.max(
+    0,
+    ...organization.function_location_matrix.map((item) => item.employee_count),
+  );
+
   return (
     <>
       <PageHeader
-        description="See where employees are positioned and where organization codes or HR support assignments are too fragmented for confident aggregation."
+        action={
+          <div className="live-pill">
+            <span />
+            {counts.filtered_records} of {counts.total_records} employees
+          </div>
+        }
+        description="Understand geographic concentration, organization-code fragmentation, and the shape of HRBP support assignments."
         eyebrow="Organization & location"
         title="Where the workforce sits"
       />
 
-      <section className="metric-grid metric-grid-four">
-        <MetricCard label="Locations" note="Distinct nonblank Location values" value="5" />
-        <MetricCard label="Organizational units" note="96% unique across employee records" tone="coral" value="96" />
-        <MetricCard label="Primary HRBP IDs" note="Average 1.5 employees per HRBP" tone="green" value="68" />
-        <MetricCard label="HRBP assignment gaps" note="Both HRBP fields are populated" tone="yellow" value="0" />
+      <form className="workforce-filter-form" method="get">
+        <div className="workforce-filter-heading">
+          <div>
+            <strong>Refine this view</strong>
+            <span>Both filters update every metric and visual on this page.</span>
+          </div>
+          <p><strong>{counts.filtered_records}</strong> of {counts.total_records} records</p>
+        </div>
+        <div className="organization-filter-grid">
+          <label className="workforce-filter-control">
+            <span>Function</span>
+            <select aria-label="Function" defaultValue={filters.functionName ?? ""} name="function">
+              <option value="">All</option>
+              {organization.filter_options.functions.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </label>
+          <label className="workforce-filter-control">
+            <span>Location</span>
+            <select aria-label="Location" defaultValue={filters.location ?? ""} name="location">
+              <option value="">All</option>
+              {organization.filter_options.locations.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </label>
+          <div className="workforce-filter-actions">
+            <button className="action-button primary" type="submit">Apply filters</button>
+            <Link className="action-button" href="/organization">Reset</Link>
+          </div>
+        </div>
+        {activeFilters.length > 0 ? (
+          <div className="workforce-active-filters">
+            <span>Active</span>
+            {activeFilters.map(([key, value]) => <b key={key}>{key}: {value}</b>)}
+          </div>
+        ) : null}
+      </form>
+
+      <section className="organization-kpi-bento organization-metrics">
+        <MetricCard label="Locations" note="Locations represented in this view" value={String(kpis.locations)} />
+        <MetricCard
+          label="Organizational units"
+          note={`${kpis.organizational_units} distinct source codes`}
+          tone="coral"
+          value={String(kpis.organizational_units)}
+        />
+        <MetricCard
+          label="Primary HRBPs"
+          note="Distinct masked primary assignments"
+          tone="green"
+          value={String(kpis.primary_hrbps)}
+        />
+        <MetricCard
+          label="Average primary workload"
+          note="Employees per primary HRBP"
+          tone="yellow"
+          value={kpis.average_primary_hrbp_workload?.toFixed(1) ?? "—"}
+        />
+        <MetricCard
+          label="Unique HRBP pairs"
+          note={`${kpis.secondary_hrbps} secondary HRBPs represented`}
+          tone="green"
+          value={String(kpis.unique_hrbp_pairs)}
+        />
+        <MetricCard
+          label="Assignment gaps"
+          note="Employees missing either HRBP assignment"
+          tone={kpis.assignment_gaps > 0 ? "coral" : "navy"}
+          value={String(kpis.assignment_gaps)}
+        />
       </section>
 
       <section className="organization-primary-grid">
-        <Panel badge="100 records" subtitle="Distinct employees grouped by Location" title="Workforce by location">
-          <LocationBarChart />
+        <Panel
+          badge={`${kpis.locations} locations`}
+          subtitle="Distinct employees grouped by location"
+          title="Workforce by location"
+        >
+          <LocationBarChart data={organization.location_distribution} />
         </Panel>
 
-        <Panel subtitle="Employee count at each function and site intersection" title="Function × location">
-          <div className="heatmap-scroll">
-            <div className="location-heatmap">
-              <span />
-              {locations.map((location) => <strong key={location}>{location}</strong>)}
-              {locationMatrix.map((row) => (
-                <div className="heatmap-row" key={row.function}>
-                  <b>{row.function}</b>
-                  {row.values.map((value, index) => (
-                    <span className={heatTone(value)} key={locations[index]} title={`${row.function}, ${locations[index]}: ${value} employees`}>
-                      {value}
-                    </span>
+        <Panel
+          badge="Count in each cell"
+          subtitle="Read across a function or down a location to spot concentration"
+          title="Function × location footprint"
+        >
+          {matrixFunctions.length > 0 && matrixLocations.length > 0 ? (
+            <>
+              <div className="heatmap-scroll">
+                <div
+                  className="location-heatmap"
+                  style={{
+                    gridTemplateColumns: `100px repeat(${matrixLocations.length}, minmax(62px, 1fr))`,
+                    minWidth: `${100 + matrixLocations.length * 74}px`,
+                  }}
+                >
+                  <strong />
+                  {matrixLocations.map((location) => <strong key={location}>{location}</strong>)}
+                  {matrixFunctions.map((functionName) => (
+                    <div className="heatmap-row" key={functionName}>
+                      <b>{functionName}</b>
+                      {matrixLocations.map((location) => {
+                        const item = matrix.get(`${functionName}::${location}`);
+                        const count = item?.employee_count ?? 0;
+                        return (
+                          <span
+                            className={heatTone(count, maximumMatrixCount)}
+                            key={location}
+                            title={`${functionName} in ${location}: ${count} employees · ${item?.function_percentage ?? 0}% of function · ${item?.location_percentage ?? 0}% of location`}
+                          >
+                            {count}
+                          </span>
+                        );
+                      })}
+                    </div>
                   ))}
                 </div>
-              ))}
-            </div>
-          </div>
-          <div className="heatmap-legend"><span>Lower</span><i className="heat-faint" /><i className="heat-light" /><i className="heat-medium" /><i className="heat-strong" /><span>Higher</span></div>
+              </div>
+              <div className="heatmap-legend">
+                <span>Lower</span><i className="heat-level-1" /><i className="heat-level-2" />
+                <i className="heat-level-3" /><i className="heat-level-4" /><span>Higher</span>
+              </div>
+            </>
+          ) : <div className="chart-empty-state">No location intersections match these filters.</div>}
         </Panel>
       </section>
 
       <section className="organization-secondary-grid">
-        <Panel className="fragmentation-panel" subtitle="High uniqueness makes these fields poor executive grouping dimensions" title="Organization-code fragmentation">
-          <div className="fragmentation-grid">
-            {codeCards.map((item) => (
-              <article key={item.label}>
-                <div><Network size={16} /><span>{item.label}</span></div>
-                <strong>{item.value}<small>% unique</small></strong>
-                <span className="fragment-track"><i style={{ width: `${item.value}%` }} /></span>
-                <p>{item.note}</p>
-              </article>
-            ))}
-          </div>
-          <div className="governance-note"><AlertTriangle size={16} /><p><strong>Governance observation</strong>Do not display these codes as a hierarchy until their business meaning and relationships are confirmed.</p></div>
+        <Panel
+          badge={`Median ${organization.workload_statistics.median ?? "—"}`}
+          subtitle="The 12 busiest masked primary assignments"
+          title="Primary HRBP workload"
+        >
+          <HrbpWorkloadChart data={organization.hrbp_workload} median={organization.workload_statistics.median} />
+          <p className="table-note">Assignment workload describes coverage only; it is not an HRBP performance measure.</p>
         </Panel>
 
-        <Panel className="hrbp-panel" subtitle="Assignment coverage and workload dispersion" title="HRBP support model">
-          <div className="hrbp-summary"><UsersRound size={18} /><div><strong>99 unique pairs</strong><span>across 100 employee records</span></div></div>
-          <div className="table-scroll">
-            <table className="data-table hrbp-table">
-              <thead><tr><th>Assignment</th><th>Distinct</th><th>Avg. employees</th><th>Max</th></tr></thead>
+        <Panel
+          badge="Top 12"
+          subtitle="How widely each masked primary HRBP spans the organization"
+          title="HRBP support breadth"
+        >
+          <div className="table-scroll organization-table-scroll">
+            <table className="data-table organization-hrbp-table">
+              <thead><tr><th>HRBP</th><th>Employees</th><th>Functions</th><th>Locations</th></tr></thead>
               <tbody>
-                {hrbpRows.map((row) => <tr key={row.assignment}><td>{row.assignment}</td><td>{row.distinct}</td><td>{row.average}</td><td>{row.maximum}</td></tr>)}
+                {organization.hrbp_breadth.map((item) => (
+                  <tr key={item.hrbp_label}>
+                    <td><strong>{item.hrbp_label}</strong></td>
+                    <td>{item.employee_count}</td>
+                    <td>{item.function_count}</td>
+                    <td>{item.location_count}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-          <p className="table-note">HRBP identifiers describe assignment coverage, not HRBP performance.</p>
+          <p className="table-note">Labels are generated inside the database so source HRBP identifiers are not exposed.</p>
         </Panel>
+      </section>
+
+      <section className="organization-footer-grid">
+        <Panel
+          className="fragmentation-panel"
+          subtitle="High uniqueness makes these fields poor executive grouping dimensions"
+          title="Organization-code fragmentation"
+        >
+          <div className="fragmentation-grid">
+            {organization.organization_fragmentation.map((item) => (
+              <article key={item.field_name}>
+                <div><Network size={16} /><span>{item.field_name}</span></div>
+                <strong>{item.fragmentation_percentage}<small>% unique</small></strong>
+                <span className="fragment-track"><i style={{ width: `${item.fragmentation_percentage}%` }} /></span>
+                <p>{item.distinct_values} distinct values across {counts.filtered_records} records</p>
+              </article>
+            ))}
+          </div>
+          <div className="governance-note">
+            <AlertTriangle size={16} />
+            <p><strong>Interpret carefully</strong>These are source-code fragmentation measures, not a confirmed reporting hierarchy.</p>
+          </div>
+        </Panel>
+
+        <article className="insight-brief-card organization-insight-brief">
+          <p className="page-eyebrow">Organization note</p>
+          <h2>{insights.largest_location ? `${insights.largest_location.location_name} is the largest location` : "No location concentration available"}</h2>
+          <div className="organization-insight-copy">
+            {insights.largest_location ? (
+              <p><strong>{insights.largest_location.employee_count} employees ({insights.largest_location.percentage}%)</strong> are based in {insights.largest_location.location_name}.</p>
+            ) : null}
+            {insights.strongest_site_specialization ? (
+              <p><strong>{insights.strongest_site_specialization.function_name}</strong> is the strongest local specialization in {insights.strongest_site_specialization.location_name}, accounting for <strong>{insights.strongest_site_specialization.percentage}%</strong> of that site.</p>
+            ) : null}
+            {insights.broadest_hrbp ? (
+              <p><strong>{insights.broadest_hrbp.hrbp_label}</strong> has the broadest support footprint: {insights.broadest_hrbp.employee_count} employees across {insights.broadest_hrbp.function_count} functions and {insights.broadest_hrbp.location_count} locations.</p>
+            ) : null}
+            <p>Primary workload ranges from <strong>{insights.hrbp_workload.minimum ?? "—"}</strong> to <strong>{insights.hrbp_workload.maximum ?? "—"}</strong> employees, with a median of <strong>{insights.hrbp_workload.median ?? "—"}</strong>. <strong>{insights.assignment_gaps}</strong> records have an HRBP assignment gap.</p>
+          </div>
+        </article>
       </section>
     </>
   );

@@ -34,6 +34,7 @@ const filterOptions = {
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const pageOwnsFilters = pathname === "/workforce" || pathname === "/organization";
 
   return (
     <div className="dashboard-frame">
@@ -107,7 +108,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        {pathname !== "/workforce" ? (
+        {!pageOwnsFilters ? (
           <section aria-label="Dashboard filters" className="filterbar">
             {Object.entries(filterOptions).map(([label, options]) => (
               <label className="filter-control" key={label}>

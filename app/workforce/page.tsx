@@ -56,13 +56,6 @@ type WorkforceComposition = {
     function_name: string;
     function_total: number;
   })[];
-  function_location_matrix: {
-    employee_count: number;
-    function_name: string;
-    function_percentage: number;
-    location_name: string;
-    location_percentage: number;
-  }[];
   role_breadth_by_function: {
     distinct_designations: number;
     dominant_designation: string;
@@ -117,15 +110,6 @@ function firstValue(value: string | string[] | undefined) {
   return value || null;
 }
 
-function heatLevel(value: number, maximum: number) {
-  if (value === 0 || maximum === 0) return "heat-level-0";
-  const ratio = value / maximum;
-  if (ratio <= 0.25) return "heat-level-1";
-  if (ratio <= 0.5) return "heat-level-2";
-  if (ratio <= 0.75) return "heat-level-3";
-  return "heat-level-4";
-}
-
 function formatAsOfDate(value: string) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
@@ -166,19 +150,6 @@ export default async function WorkforcePage({ searchParams }: { searchParams: Se
   const female = kpis.gender_representation.find((item) => item.gender_key === "F");
   const male = kpis.gender_representation.find((item) => item.gender_key === "M");
   const leadingGroup = kpis.employee_group_mix[0];
-  const functions = workforce.function_distribution.map((item) => item.function_name);
-  const locations = workforce.filter_options.locations;
-  const matrix = new Map(
-    workforce.function_location_matrix.map((item) => [
-      `${item.function_name}::${item.location_name}`,
-      item,
-    ]),
-  );
-  const maximumMatrixCount = Math.max(
-    0,
-    ...workforce.function_location_matrix.map((item) => item.employee_count),
-  );
-
   return (
     <>
       <PageHeader
@@ -316,52 +287,6 @@ export default async function WorkforcePage({ searchParams }: { searchParams: Se
           <DesignationBarChart data={workforce.designation_mix} />
         </Panel>
       </section>
-
-      <Panel
-        badge="Count in each cell"
-        className="workforce-heatmap-panel"
-        subtitle="Read across a function or down a location to spot concentration"
-        title="Function × location footprint"
-      >
-        <div className="workforce-heatmap-scroll">
-          <div
-            className="workforce-location-heatmap"
-            style={{
-              gridTemplateColumns: `110px repeat(${locations.length}, minmax(72px, 1fr))`,
-              minWidth: `${110 + locations.length * 82}px`,
-            }}
-          >
-            <strong />
-            {locations.map((location) => <strong key={location}>{location}</strong>)}
-            {functions.map((functionName) => (
-              <div className="workforce-heatmap-row" key={functionName}>
-                <b>{functionName}</b>
-                {locations.map((location) => {
-                  const item = matrix.get(`${functionName}::${location}`);
-                  const employeeCount = item?.employee_count ?? 0;
-                  return (
-                    <span
-                      className={heatLevel(employeeCount, maximumMatrixCount)}
-                      key={location}
-                      title={`${functionName} in ${location}: ${employeeCount} employees · ${item?.function_percentage ?? 0}% of function · ${item?.location_percentage ?? 0}% of location`}
-                    >
-                      {employeeCount}
-                    </span>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="heatmap-legend">
-          <span>Lower</span>
-          <i className="heat-level-1" />
-          <i className="heat-level-2" />
-          <i className="heat-level-3" />
-          <i className="heat-level-4" />
-          <span>Higher</span>
-        </div>
-      </Panel>
 
       <section className="workforce-detail-grid">
         <Panel

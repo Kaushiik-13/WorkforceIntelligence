@@ -1,0 +1,94 @@
+"use client";
+
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import type { TooltipContentProps } from "recharts";
+
+type WorkloadPoint = {
+  employee_count: number;
+  hrbp_label: string;
+};
+
+function WorkloadTooltip({ active, payload }: TooltipContentProps) {
+  if (!active || !payload?.length) return null;
+
+  const point = payload[0].payload as WorkloadPoint;
+
+  return (
+    <div className="chart-tooltip">
+      <p>{point.hrbp_label}</p>
+      <strong>{point.employee_count} employees</strong>
+      <span>Primary assignments in the current view</span>
+    </div>
+  );
+}
+
+export function HrbpWorkloadChart({
+  data,
+  median,
+}: {
+  data: WorkloadPoint[];
+  median: number | null;
+}) {
+  if (data.length === 0) {
+    return <div className="chart-empty-state">No primary HRBP assignments match these filters.</div>;
+  }
+
+  const maximum = Math.max(...data.map((item) => item.employee_count));
+
+  return (
+    <div className="organization-workload-chart">
+      <ResponsiveContainer height="100%" width="100%">
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ bottom: 2, left: 8, right: 28, top: 8 }}
+        >
+          <CartesianGrid horizontal={false} stroke="#e5e3dd" strokeDasharray="3 5" />
+          <XAxis
+            allowDecimals={false}
+            axisLine={false}
+            domain={[0, "dataMax + 1"]}
+            tick={{ fill: "#6f756f", fontSize: 10 }}
+            tickLine={false}
+            type="number"
+          />
+          <YAxis
+            axisLine={false}
+            dataKey="hrbp_label"
+            tick={{ fill: "#6f756f", fontSize: 9 }}
+            tickLine={false}
+            type="category"
+            width={62}
+          />
+          <Tooltip content={WorkloadTooltip} cursor={{ fill: "rgba(40, 75, 99, 0.05)" }} />
+          {median !== null ? (
+            <ReferenceLine
+              label={{ fill: "#a97826", fontSize: 9, position: "insideTopRight", value: `Median ${median}` }}
+              stroke="#edb458"
+              strokeDasharray="4 4"
+              x={median}
+            />
+          ) : null}
+          <Bar animationDuration={420} dataKey="employee_count" radius={[0, 6, 6, 0]}>
+            {data.map((item, index) => (
+              <Cell
+                fill={item.employee_count === maximum && index === 0 ? "#f06449" : "#284b63"}
+                key={item.hrbp_label}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
