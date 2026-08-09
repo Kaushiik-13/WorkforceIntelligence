@@ -25,6 +25,7 @@ import {
   Minus,
   Plus,
   RotateCcw,
+  Search,
   SlidersHorizontal,
   X,
 } from "lucide-react";
@@ -36,7 +37,20 @@ import {
   FunctionBarChart,
   LocationBarChart,
 } from "@/components/charts";
+import {
+  CrossPageWidgetContent,
+  crossPageWidgetDefinitions,
+  type CrossPageWidgetId,
+  type WidgetDefinition,
+  type WidgetSize,
+  type WidgetSource,
+} from "@/components/cross-page-dashboard-widgets";
 import { PageHeader } from "@/components/ui";
+import type {
+  LifecycleOverviewData,
+  OrganizationOverviewData,
+  WorkforceCompositionData,
+} from "@/lib/dashboard-types";
 
 export type ExecutiveOverviewData = {
   as_of_date: string;
@@ -110,7 +124,7 @@ export type ExecutiveSupplementData = {
   };
 };
 
-type WidgetId =
+type OverviewWidgetId =
   | "workforce-snapshot"
   | "experience"
   | "movement"
@@ -119,66 +133,87 @@ type WidgetId =
   | "location"
   | "age-tenure"
   | "insight";
-type WidgetSize = "small" | "medium" | "wide" | "large";
-type WidgetLayout = { id: WidgetId; size: WidgetSize; visible: boolean };
-type WidgetDefinition = {
-  title: string;
-  subtitle: string;
-  kind: "metric" | "chart" | "story";
-  sizes: WidgetSize[];
-};
 
-const storageKey = "workforce-overview-layout-v1";
-const widgetDefinitions: Record<WidgetId, WidgetDefinition> = {
+const legacyStorageKey = "workforce-overview-layout-v1";
+const storageKey = "workforce-overview-layout-v2";
+const overviewWidgetDefinitions = {
   "workforce-snapshot": {
     title: "Workforce snapshot",
     subtitle: "Scale and organizational reach",
     kind: "metric",
     sizes: ["small", "medium", "wide"],
+    defaultSize: "small",
+    source: "Overview",
   },
   experience: {
     title: "Experience profile",
     subtitle: "Age, tenure and depth",
     kind: "metric",
     sizes: ["small", "medium", "wide"],
+    defaultSize: "small",
+    source: "Overview",
   },
   movement: {
     title: "Workforce movement",
     subtitle: "Recent joins and retirement horizon",
     kind: "metric",
     sizes: ["small", "medium", "wide"],
+    defaultSize: "small",
+    source: "Overview",
   },
   function: {
     title: "Workforce by function",
     subtitle: "Functions ranked by distinct employee records",
     kind: "chart",
     sizes: ["medium", "wide", "large"],
+    defaultSize: "wide",
+    source: "Overview",
   },
   mix: {
     title: "Workforce mix",
     subtitle: "Employee group and gender representation",
     kind: "chart",
     sizes: ["small", "medium", "wide"],
+    defaultSize: "small",
+    source: "Overview",
   },
   location: {
     title: "Workforce by location",
     subtitle: "Locations ranked by distinct employee records",
     kind: "chart",
     sizes: ["small", "medium", "wide", "large"],
+    defaultSize: "small",
+    source: "Overview",
   },
   "age-tenure": {
     title: "Age and tenure profile",
     subtitle: "Employees across completed age and tenure bands",
     kind: "chart",
     sizes: ["wide", "large"],
+    defaultSize: "wide",
+    source: "Overview",
   },
   insight: {
     title: "Leadership brief",
     subtitle: "The strongest signals in the current data",
     kind: "story",
     sizes: ["medium", "wide", "large"],
+    defaultSize: "large",
+    source: "Overview",
   },
-};
+} as const satisfies Record<OverviewWidgetId, WidgetDefinition>;
+
+const widgetDefinitions = {
+  ...overviewWidgetDefinitions,
+  ...crossPageWidgetDefinitions,
+} as const satisfies Record<string, WidgetDefinition>;
+
+type WidgetId = keyof typeof widgetDefinitions;
+type WidgetLayout = { id: WidgetId; size: WidgetSize; visible: boolean };
+
+function getWidgetSizes(id: WidgetId): readonly WidgetSize[] {
+  return widgetDefinitions[id].sizes as readonly WidgetSize[];
+}
 
 const defaultLayout: WidgetLayout[] = [
   { id: "workforce-snapshot", size: "small", visible: true },
@@ -189,6 +224,17 @@ const defaultLayout: WidgetLayout[] = [
   { id: "age-tenure", size: "wide", visible: true },
   { id: "location", size: "small", visible: true },
   { id: "insight", size: "large", visible: true },
+];
+
+const initialLayout: WidgetLayout[] = [
+  ...defaultLayout,
+  ...(Object.keys(widgetDefinitions) as WidgetId[])
+    .filter((id) => !defaultLayout.some((item) => item.id === id))
+    .map((id) => ({
+      id,
+      size: widgetDefinitions[id].defaultSize,
+      visible: false,
+    })),
 ];
 
 const genderLabels: Record<string, string> = {
@@ -204,24 +250,24 @@ function getGenderTone(genderKey: string) {
 }
 
 function restoreLayout(value: string | null) {
-  if (!value) return defaultLayout;
+  if (!value) return initialLayout;
   try {
     const parsed = JSON.parse(value) as WidgetLayout[];
     const knownIds = new Set(Object.keys(widgetDefinitions));
-    if (!Array.isArray(parsed)) return defaultLayout;
+    if (!Array.isArray(parsed)) return initialLayout;
     const restored = parsed.filter(
       (item) =>
         knownIds.has(item.id) &&
-        widgetDefinitions[item.id]?.sizes.includes(item.size) &&
+        getWidgetSizes(item.id).includes(item.size) &&
         typeof item.visible === "boolean",
     );
     const restoredIds = new Set(restored.map((item) => item.id));
-    const missing = defaultLayout
+    const missing = initialLayout
       .filter((item) => !restoredIds.has(item.id))
       .map((item) => ({ ...item, visible: false }));
-    return restored.length ? [...restored, ...missing] : defaultLayout;
+    return restored.length ? [...restored, ...missing] : initialLayout;
   } catch {
-    return defaultLayout;
+    return initialLayout;
   }
 }
 
@@ -324,16 +370,24 @@ function SortableWidget({
 }
 
 export function CustomizableOverview({
+  lifecycle,
+  organization,
   overview,
   supplement,
+  workforce,
 }: {
+  lifecycle: LifecycleOverviewData;
+  organization: OrganizationOverviewData;
   overview: ExecutiveOverviewData;
   supplement: ExecutiveSupplementData;
+  workforce: WorkforceCompositionData;
 }) {
   const [editing, setEditing] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState("");
+  const [librarySource, setLibrarySource] = useState<"All" | WidgetSource>("All");
   const [hydrated, setHydrated] = useState(false);
-  const [layout, setLayout] = useState<WidgetLayout[]>(defaultLayout);
+  const [layout, setLayout] = useState<WidgetLayout[]>(initialLayout);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, {
@@ -345,7 +399,9 @@ export function CustomizableOverview({
   );
 
   useEffect(() => {
-    const savedLayout = restoreLayout(window.localStorage.getItem(storageKey));
+    const savedValue = window.localStorage.getItem(storageKey)
+      ?? window.localStorage.getItem(legacyStorageKey);
+    const savedLayout = restoreLayout(savedValue);
     const frame = window.requestAnimationFrame(() => {
       setLayout(savedLayout);
       setHydrated(true);
@@ -360,6 +416,22 @@ export function CustomizableOverview({
 
   const visibleWidgets = layout.filter((item) => item.visible);
   const hiddenWidgets = layout.filter((item) => !item.visible);
+  const normalizedSearch = librarySearch.trim().toLowerCase();
+  const libraryWidgets = hiddenWidgets.filter((item) => {
+    const definition = widgetDefinitions[item.id];
+    const matchesSource = librarySource === "All" || definition.source === librarySource;
+    const matchesSearch = !normalizedSearch
+      || `${definition.title} ${definition.subtitle} ${definition.source}`.toLowerCase().includes(normalizedSearch);
+    return matchesSource && matchesSearch;
+  });
+  const widgetSources: ("All" | WidgetSource)[] = [
+    "All",
+    "Overview",
+    "Workforce",
+    "Organization",
+    "Lifecycle",
+    "Operations",
+  ];
   const { insights, kpis } = overview;
   const asOfLabel = new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
@@ -394,7 +466,7 @@ export function CustomizableOverview({
     setLayout((current) =>
       current.map((item) => {
         if (item.id !== id) return item;
-        const sizes = widgetDefinitions[id].sizes;
+        const sizes = getWidgetSizes(id);
         const nextIndex = Math.min(
           Math.max(sizes.indexOf(item.size) + direction, 0),
           sizes.length - 1,
@@ -547,6 +619,15 @@ export function CustomizableOverview({
             </p>
           </div>
         );
+      default:
+        return (
+          <CrossPageWidgetContent
+            id={id as CrossPageWidgetId}
+            lifecycle={lifecycle}
+            organization={organization}
+            workforce={workforce}
+          />
+        );
     }
   }
 
@@ -606,7 +687,7 @@ export function CustomizableOverview({
             </button>
             <button
               onClick={() =>
-                setLayout(defaultLayout.map((item) => ({ ...item })))
+                setLayout(initialLayout.map((item) => ({ ...item })))
               }
               type="button"
             >
@@ -625,7 +706,7 @@ export function CustomizableOverview({
           <header>
             <div>
               <p>Widget library</p>
-              <h2>Add another view</h2>
+              <h2>Choose from every dashboard page</h2>
             </div>
             <button
               aria-label="Close widget library"
@@ -635,15 +716,45 @@ export function CustomizableOverview({
               <X size={15} />
             </button>
           </header>
-          {hiddenWidgets.length ? (
-            <div>
-              {hiddenWidgets.map((item) => (
+          <div className="dashboard-library-toolbar">
+            <label>
+              <Search aria-hidden="true" size={14} />
+              <input
+                aria-label="Search widgets"
+                onChange={(event) => setLibrarySearch(event.target.value)}
+                placeholder="Search charts, metrics or tables"
+                type="search"
+                value={librarySearch}
+              />
+            </label>
+            <div className="dashboard-library-sources" role="tablist" aria-label="Widget page">
+              {widgetSources.map((source) => {
+                const count = hiddenWidgets.filter((item) => source === "All" || widgetDefinitions[item.id].source === source).length;
+                return (
+                  <button
+                    aria-selected={librarySource === source}
+                    className={librarySource === source ? "active" : ""}
+                    key={source}
+                    onClick={() => setLibrarySource(source)}
+                    role="tab"
+                    type="button"
+                  >
+                    {source}<span>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {libraryWidgets.length ? (
+            <div className="dashboard-library-grid">
+              {libraryWidgets.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setWidgetVisible(item.id, true)}
                   type="button"
                 >
                   <span>
+                    <small className="dashboard-widget-source">{widgetDefinitions[item.id].source}</small>
                     <strong>{widgetDefinitions[item.id].title}</strong>
                     <small>{widgetDefinitions[item.id].subtitle}</small>
                   </span>
@@ -653,7 +764,9 @@ export function CustomizableOverview({
             </div>
           ) : (
             <p className="dashboard-library-empty">
-              Every available widget is already on your dashboard.
+              {hiddenWidgets.length
+                ? "No available widgets match this search."
+                : "Every available widget is already on your dashboard."}
             </p>
           )}
         </section>
