@@ -335,12 +335,6 @@ h1, h2, h3, p { margin: 0; }
 .organization-distribution-chart { height: 205px; width: 100%; }
 .interactive-chart .recharts-bar-rectangle { cursor: pointer; }
 .chart-interaction-hint { color: #858a85; font-size: 8px; margin-top: 5px; text-align: right; }
-.panel-help { border-bottom: 1px solid var(--grid); margin-bottom: 3px; padding: 2px 0 9px; }
-.panel-help summary { align-items: center; color: var(--navy); cursor: pointer; display: inline-flex; font-size: 9px; font-weight: 700; gap: 6px; list-style: none; }
-.panel-help summary::-webkit-details-marker { display: none; }
-.panel-help summary::after { color: #8c918c; content: "+"; font-size: 12px; font-weight: 500; margin-left: 2px; }
-.panel-help[open] summary::after { content: "−"; }
-.panel-help p { color: #777e79; font-size: 9px; line-height: 1.55; margin-top: 7px; max-width: 520px; }
 .chart-empty-state { align-items: center; color: var(--muted); display: flex; font-size: 10px; justify-content: center; min-height: 250px; text-align: center; }
 .organization-table-scroll { margin-top: 9px; }
 .organization-hrbp-table { min-width: 520px; }

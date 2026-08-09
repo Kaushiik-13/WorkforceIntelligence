@@ -1,4 +1,4 @@
-import { AlertTriangle, CircleHelp, Network } from "lucide-react";
+import { AlertTriangle, Network } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
 
@@ -118,15 +118,6 @@ function heatTone(value: number, maximum: number) {
   if (ratio <= 0.5) return "heat-level-2";
   if (ratio <= 0.75) return "heat-level-3";
   return "heat-level-4";
-}
-
-function PanelHelp({ children }: { children: string }) {
-  return (
-    <details className="panel-help">
-      <summary><CircleHelp aria-hidden="true" size={14} />How to read</summary>
-      <p>{children}</p>
-    </details>
-  );
 }
 
 export default async function OrganizationPage({ searchParams }: { searchParams: SearchParams }) {
@@ -331,7 +322,6 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
             subtitle="The 12 busiest masked primary assignments"
             title="Primary HRBP workload"
           >
-            <PanelHelp>Each bar is one primary HRBP. The bar length and end label show how many employees are assigned to that HRBP.</PanelHelp>
             <HrbpWorkloadChart average={organization.workload_statistics.average} data={organization.hrbp_workload} />
             <p className="table-note">The dashed line is the overall average: filtered employees ÷ primary HRBPs. This measures coverage, not performance.</p>
           </Panel>
@@ -341,7 +331,6 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
             subtitle="How assignment volume and organizational reach are distributed"
             title="HRBP coverage pattern"
           >
-            <PanelHelp>The two large numbers count HRBPs. Each green bar groups HRBPs by whether they support 1, 2, 3, or 4+ employees.</PanelHelp>
             <div className="organization-coverage-summary">
               <article>
                 <span>Multi-function HRBPs</span>
@@ -386,7 +375,6 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
             subtitle="How widely each masked primary HRBP spans the organization"
             title="HRBP support breadth"
           >
-            <PanelHelp>Employees is assignment volume. Functions and Locations show how widely each masked HRBP&apos;s assigned employees are distributed.</PanelHelp>
             <div className="table-scroll organization-table-scroll">
               <table className="data-table organization-hrbp-table">
                 <thead><tr><th>HRBP</th><th>Employees</th><th>Functions</th><th>Locations</th></tr></thead>
