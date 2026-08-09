@@ -275,15 +275,13 @@ h1, h2, h3, p { margin: 0; }
 .workforce-active-filters b { background: #f1eee7; border-radius: 99px; color: #59605d; font-size: 8px; font-weight: 600; padding: 5px 8px; text-transform: capitalize; }
 .organization-scope-summary { border-top: 1px solid var(--grid); color: #777e79; font-size: 9px; line-height: 1.5; margin-top: 13px; padding-top: 11px; }
 .organization-scope-summary strong { color: var(--ink); }
-.workforce-kpi-bento { display: grid; gap: 16px; grid-template-columns: repeat(12, minmax(0, 1fr)); margin-bottom: 16px; }
-.workforce-kpi-bento .metric-card { min-height: 158px; }
-.workforce-kpi-bento .metric-card:nth-child(1) { grid-column: span 5; }
-.workforce-kpi-bento .metric-card:nth-child(2) { grid-column: span 4; }
-.workforce-kpi-bento .metric-card:nth-child(3) { grid-column: span 3; }
-.workforce-kpi-bento .metric-card:nth-child(4) { grid-column: span 5; }
-.workforce-kpi-bento .metric-card:nth-child(5) { grid-column: span 3; }
-.workforce-kpi-bento .metric-card:nth-child(6) { grid-column: span 4; }
-.workforce-metrics .metric-card strong { font-size: 24px; }
+.workforce-kpi-bento, .organization-kpi-bento { display: grid; gap: 12px; grid-template-columns: repeat(6, minmax(0, 1fr)); margin-bottom: 16px; }
+.workforce-kpi-bento .metric-card, .organization-kpi-bento .metric-card { border-radius: 14px; min-height: 112px; padding: 14px 15px; }
+.workforce-kpi-bento .metric-content, .organization-kpi-bento .metric-content { bottom: auto; display: flex; flex-direction: column; height: 100%; justify-content: center; left: auto; position: relative; right: auto; }
+.workforce-kpi-bento .metric-corner, .organization-kpi-bento .metric-corner { border-radius: 0 0 5px 5px; height: 3px; left: 15px; opacity: .72; right: auto; width: 34px; }
+.workforce-kpi-bento .metric-label, .organization-kpi-bento .metric-label { font-size: 8px; line-height: 1.35; margin-bottom: 5px; }
+.workforce-kpi-bento .metric-card strong, .organization-kpi-bento .metric-card strong { font-size: 21px; line-height: 1.12; }
+.workforce-kpi-bento .metric-card p, .organization-kpi-bento .metric-card p { font-size: 9px; line-height: 1.35; margin-top: 5px; }
 .workforce-primary-grid, .workforce-secondary-grid, .workforce-detail-grid { display: grid; gap: 16px; margin-bottom: 16px; }
 .workforce-primary-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
 .workforce-secondary-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
@@ -300,15 +298,6 @@ h1, h2, h3, p { margin: 0; }
 .workforce-insight-copy strong { color: var(--ink); }
 
 .organization-filter-grid { align-items: end; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(160px, 1fr)) auto; }
-.organization-kpi-bento { display: grid; gap: 16px; grid-template-columns: repeat(12, minmax(0, 1fr)); margin-bottom: 16px; }
-.organization-kpi-bento .metric-card { min-height: 158px; }
-.organization-kpi-bento .metric-card:nth-child(1) { grid-column: span 3; }
-.organization-kpi-bento .metric-card:nth-child(2) { grid-column: span 5; }
-.organization-kpi-bento .metric-card:nth-child(3) { grid-column: span 4; }
-.organization-kpi-bento .metric-card:nth-child(4) { grid-column: span 4; }
-.organization-kpi-bento .metric-card:nth-child(5) { grid-column: span 5; }
-.organization-kpi-bento .metric-card:nth-child(6) { grid-column: span 3; }
-.organization-metrics .metric-card strong { font-size: 24px; }
 .organization-primary-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); margin-bottom: 16px; }
 .organization-primary-grid .panel { min-height: 385px; }
 .organization-detail-bento { align-items: start; display: grid; gap: 16px; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
@@ -676,6 +665,7 @@ h1, h2, h3, p { margin: 0; }
 
 @media (max-width: 1180px) {
   .metric-grid-four, .metric-grid-six, .metric-grid-eight { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workforce-kpi-bento, .organization-kpi-bento { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .overview-primary-grid, .overview-secondary-grid, .quality-summary-grid { grid-template-columns: 1fr; }
   .workforce-filter-grid { grid-template-columns: repeat(3, minmax(120px, 1fr)); }
   .lifecycle-filter-grid { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
@@ -768,12 +758,16 @@ h1, h2, h3, p { margin: 0; }
   .lifecycle-detail-panel[open] summary { grid-template-columns: auto minmax(0, 1fr) auto; }
   .lifecycle-detail-panel[open] .lifecycle-detail-copy p { max-width: 220px; }
   .workforce-filter-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .workforce-kpi-bento, .workforce-primary-grid, .workforce-secondary-grid, .workforce-detail-grid, .organization-kpi-bento, .organization-primary-grid { grid-template-columns: 1fr; }
-  .workforce-kpi-bento .metric-card { grid-column: 1 / -1 !important; }
-  .organization-kpi-bento .metric-card { grid-column: 1 / -1 !important; }
+  .workforce-kpi-bento, .organization-kpi-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workforce-kpi-bento .metric-card, .organization-kpi-bento .metric-card { grid-column: auto !important; }
+  .workforce-primary-grid, .workforce-secondary-grid, .workforce-detail-grid, .organization-primary-grid { grid-template-columns: 1fr; }
   .workforce-insight-copy { grid-template-columns: 1fr; }
   .organization-coverage-summary { grid-template-columns: 1fr; }
   .organization-coverage-summary article + article { border-left: 0; border-top: 1px solid var(--grid); padding-left: 10px; }
+}
+
+@media (max-width: 480px) {
+  .workforce-kpi-bento, .organization-kpi-bento { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
