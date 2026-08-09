@@ -5,6 +5,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -34,10 +35,10 @@ function WorkloadTooltip({ active, payload }: TooltipContentProps) {
 
 export function HrbpWorkloadChart({
   data,
-  median,
+  average,
 }: {
   data: WorkloadPoint[];
-  median: number | null;
+  average: number | null;
 }) {
   if (data.length === 0) {
     return <div className="chart-empty-state">No primary HRBP assignments match these filters.</div>;
@@ -71,12 +72,12 @@ export function HrbpWorkloadChart({
             width={62}
           />
           <Tooltip content={WorkloadTooltip} cursor={{ fill: "rgba(40, 75, 99, 0.05)" }} />
-          {median !== null ? (
+          {average !== null ? (
             <ReferenceLine
-              label={{ fill: "#a97826", fontSize: 9, position: "insideTopRight", value: `Median ${median}` }}
+              label={{ fill: "#a97826", fontSize: 9, position: "insideTopRight", value: `Average ${average}` }}
               stroke="#edb458"
               strokeDasharray="4 4"
-              x={median}
+              x={average}
             />
           ) : null}
           <Bar animationDuration={420} dataKey="employee_count" radius={[0, 6, 6, 0]}>
@@ -86,6 +87,14 @@ export function HrbpWorkloadChart({
                 key={item.hrbp_label}
               />
             ))}
+            <LabelList
+              dataKey="employee_count"
+              fill="#59605d"
+              fontSize={9}
+              fontWeight={650}
+              offset={7}
+              position="right"
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>

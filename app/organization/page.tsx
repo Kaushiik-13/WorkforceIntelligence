@@ -288,12 +288,12 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
 
       <section className="organization-secondary-grid">
         <Panel
-          badge={`Median ${organization.workload_statistics.median ?? "—"}`}
+          badge={`Average ${organization.workload_statistics.average ?? "—"}`}
           subtitle="The 12 busiest masked primary assignments"
           title="Primary HRBP workload"
         >
-          <HrbpWorkloadChart data={organization.hrbp_workload} median={organization.workload_statistics.median} />
-          <p className="table-note">Assignment workload describes coverage only; it is not an HRBP performance measure.</p>
+          <HrbpWorkloadChart average={organization.workload_statistics.average} data={organization.hrbp_workload} />
+          <p className="table-note">The dashed line is the overall average: filtered employees ÷ primary HRBPs. This measures coverage, not performance.</p>
         </Panel>
 
         <Panel
@@ -355,7 +355,7 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
             {insights.broadest_hrbp ? (
               <p><strong>{insights.broadest_hrbp.hrbp_label}</strong> has the broadest support footprint: {insights.broadest_hrbp.employee_count} employees across {insights.broadest_hrbp.function_count} functions and {insights.broadest_hrbp.location_count} locations.</p>
             ) : null}
-            <p>Primary workload ranges from <strong>{insights.hrbp_workload.minimum ?? "—"}</strong> to <strong>{insights.hrbp_workload.maximum ?? "—"}</strong> employees, with a median of <strong>{insights.hrbp_workload.median ?? "—"}</strong>. <strong>{insights.assignment_gaps}</strong> records have an HRBP assignment gap.</p>
+            <p>Primary workload ranges from <strong>{insights.hrbp_workload.minimum ?? "—"}</strong> to <strong>{insights.hrbp_workload.maximum ?? "—"}</strong> employees, with an average of <strong>{insights.hrbp_workload.average ?? "—"}</strong>. <strong>{insights.assignment_gaps}</strong> records have an HRBP assignment gap.</p>
           </div>
         </article>
       </section>
