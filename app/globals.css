@@ -258,6 +258,8 @@ h1, h2, h3, p { margin: 0; }
 .executive-heatmap-row b { align-items: center; color: #616966; display: flex; font-size: 9px; font-weight: 650; }
 .executive-heatmap-row span { align-items: center; border-radius: 8px; display: flex; font-family: var(--font-manrope), Manrope, sans-serif; font-size: 11px; font-weight: 650; height: 40px; justify-content: center; transition: transform 160ms ease, box-shadow 160ms ease; }
 .executive-heatmap-row span:hover { box-shadow: 0 7px 18px rgba(30,44,48,.12); transform: translateY(-2px); }
+.executive-heatmap-row span:focus-visible, .heatmap-row span:focus-visible, .heatmap-row a:focus-visible { box-shadow: 0 0 0 3px rgba(40,75,99,.16), 0 7px 18px rgba(30,44,48,.12); outline: 1px solid var(--navy); transform: translateY(-2px); }
+.heatmap-floating-tooltip { background: #203d50; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; box-shadow: 0 10px 28px rgba(22,38,48,.2); color: #fff; font-size: 10px; font-weight: 600; line-height: 1.45; max-width: 290px; padding: 8px 10px; pointer-events: none; position: fixed; text-align: center; transform: translate(-50%, -100%); z-index: 10000; }
 .heat-level-0 { background: #f2f0eb; color: #a5a8a3; }.heat-level-1 { background: #f4e7e3; color: #95665d; }.heat-level-2 { background: #f8cfc6; color: #8f493b; }.heat-level-3 { background: #f49a86; color: #71362b; }.heat-level-4 { background: var(--coral); color: #fff; }
 
 .workforce-filter-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; padding: 17px 19px; }

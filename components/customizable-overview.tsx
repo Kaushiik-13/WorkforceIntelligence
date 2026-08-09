@@ -187,8 +187,8 @@ const overviewWidgetDefinitions = {
     source: "Overview",
   },
   "age-tenure": {
-    title: "Age and tenure profile",
-    subtitle: "Employees across completed age and tenure bands",
+    title: "Age × tenure heatmap",
+    subtitle: "Employee count at each age and completed-service combination",
     kind: "chart",
     sizes: ["wide", "large"],
     defaultSize: "wide",
@@ -319,6 +319,7 @@ function SortableWidget({
     <article
       className={`dashboard-widget widget-${definition.kind}${editing ? " is-editing" : ""}${isDragging ? " is-dragging" : ""}`}
       data-size={layout.size}
+      data-widget-id={layout.id}
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
     >
@@ -556,7 +557,12 @@ export function CustomizableOverview({
       case "location":
         return <LocationBarChart data={overview.workforce_by_location} />;
       case "age-tenure":
-        return <AgeTenureHeatmap data={overview.age_tenure_matrix} />;
+        return (
+          <div className="dashboard-heatmap-content">
+            <AgeTenureHeatmap data={overview.age_tenure_matrix} />
+            <p className="dashboard-heatmap-note">Columns show employee age. Rows show completed years of service. A darker cell contains more employees.</p>
+          </div>
+        );
       case "mix":
         return (
           <div className="dashboard-mix-layout">

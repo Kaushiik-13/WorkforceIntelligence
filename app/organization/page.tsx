@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { LocationBarChart } from "@/components/charts";
+import { HeatmapCell } from "@/components/heatmap-cell";
 import {
   HrbpWorkloadChart,
   HrbpWorkloadDistributionChart,
@@ -287,18 +288,18 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
                         const count = item?.employee_count ?? 0;
                         const label = `${functionName} in ${location}: ${count} employees · ${item?.function_percentage ?? 0}% of function · ${item?.location_percentage ?? 0}% of location`;
 
-                        return count > 0 ? (
-                          <Link
-                            aria-label={`Filter to ${functionName} in ${location}, ${count} employees`}
-                            className={`${heatTone(count, maximumMatrixCount)} interactive-heat-cell`}
-                            href={{ pathname: "/organization", query: { function: functionName, location } }}
+                        return (
+                          <HeatmapCell
+                            ariaLabel={count > 0
+                              ? `Filter to ${functionName} in ${location}, ${count} employees`
+                              : `${functionName} in ${location}, no employees`}
+                            className={`${heatTone(count, maximumMatrixCount)}${count > 0 ? " interactive-heat-cell" : ""}`}
+                            href={count > 0 ? `/organization?function=${encodeURIComponent(functionName)}&location=${encodeURIComponent(location)}` : undefined}
                             key={location}
-                            title={label}
+                            label={label}
                           >
                             {count}
-                          </Link>
-                        ) : (
-                          <span className={heatTone(count, maximumMatrixCount)} key={location} title={label}>0</span>
+                          </HeatmapCell>
                         );
                       })}
                     </div>

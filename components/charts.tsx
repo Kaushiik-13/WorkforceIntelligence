@@ -17,6 +17,8 @@ import {
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
 
+import { HeatmapCell } from "@/components/heatmap-cell";
+
 const colors = {
   coral: "#f06449",
   navy: "#284b63",
@@ -286,14 +288,16 @@ export function AgeTenureHeatmap({
                 ? 0
                 : Math.max(1, Math.ceil((count / maximumCount) * 4));
 
+              const label = `${ageBand} age, ${tenureBand} years of service: ${count} ${count === 1 ? "employee" : "employees"}${item ? ` (${item.percentage}% of the workforce)` : ""}`;
+
               return (
-                <span
+                <HeatmapCell
                   className={`heat-level-${intensity}`}
                   key={ageBand}
-                  title={`${ageBand}, ${tenureBand} years: ${count} employees${item ? ` (${item.percentage}%)` : ""}`}
+                  label={label}
                 >
                   {count}
-                </span>
+                </HeatmapCell>
               );
             })}
           </div>

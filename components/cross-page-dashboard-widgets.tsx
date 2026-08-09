@@ -10,6 +10,7 @@ import {
 import Link from "next/link";
 
 import { AgeTenureHeatmap, LocationBarChart } from "@/components/charts";
+import { HeatmapCell } from "@/components/heatmap-cell";
 import {
   JoiningCohortLineChart,
   LifecycleDistributionChart,
@@ -124,7 +125,7 @@ export const crossPageWidgetDefinitions = {
   },
   "organization-footprint": {
     title: "Function × location footprint",
-    subtitle: "Employee count at each function and location intersection",
+    subtitle: "Read across a function or down a location to spot concentration",
     kind: "chart",
     sizes: ["wide", "large"],
     defaultSize: "large",
@@ -243,8 +244,8 @@ export const crossPageWidgetDefinitions = {
     source: "Lifecycle",
   },
   "lifecycle-age-tenure": {
-    title: "Lifecycle age × tenure",
-    subtitle: "Employee count at each age and service combination",
+    title: "Age × tenure heatmap",
+    subtitle: "Employee count at each age and completed-service combination",
     kind: "chart",
     sizes: ["wide", "large"],
     defaultSize: "wide",
@@ -403,35 +404,48 @@ function FunctionLocationFootprint({ data }: { data: OrganizationOverviewData })
   const maximum = Math.max(0, ...data.function_location_matrix.map((item) => item.employee_count));
 
   return (
-    <div className="cross-widget-heatmap-wrap">
-      <div
-        className="location-heatmap"
-        style={{
-          gridTemplateColumns: `92px repeat(${locations.length}, minmax(58px, 1fr))`,
-          minWidth: `${92 + locations.length * 70}px`,
-        }}
-      >
-        <strong />
-        {locations.map((location) => <strong key={location}>{location}</strong>)}
-        {functions.map((functionName) => (
-          <div className="heatmap-row" key={functionName}>
-            <b>{functionName}</b>
-            {locations.map((location) => {
-              const item = matrix.get(`${functionName}::${location}`);
-              const count = item?.employee_count ?? 0;
-              return (
-                <span
-                  className={heatTone(count, maximum)}
-                  key={location}
-                  title={`${functionName} in ${location}: ${count} employees`}
-                >
-                  {count}
-                </span>
-              );
-            })}
-          </div>
-        ))}
+    <div className="dashboard-heatmap-content organization-widget-heatmap">
+      <div className="cross-widget-heatmap-wrap">
+        <div
+          className="location-heatmap"
+          style={{
+            gridTemplateColumns: `92px repeat(${locations.length}, minmax(58px, 1fr))`,
+            minWidth: `${92 + locations.length * 70}px`,
+          }}
+        >
+          <strong />
+          {locations.map((location) => <strong key={location}>{location}</strong>)}
+          {functions.map((functionName) => (
+            <div className="heatmap-row" key={functionName}>
+              <b>{functionName}</b>
+              {locations.map((location) => {
+                const item = matrix.get(`${functionName}::${location}`);
+                const count = item?.employee_count ?? 0;
+                const label = `${functionName} in ${location}: ${count} ${count === 1 ? "employee" : "employees"} · ${item?.function_percentage ?? 0}% of the function · ${item?.location_percentage ?? 0}% of the location`;
+                const href = count > 0
+                  ? `/organization?function=${encodeURIComponent(functionName)}&location=${encodeURIComponent(location)}`
+                  : undefined;
+
+                return (
+                  <HeatmapCell
+                    className={`${heatTone(count, maximum)}${count > 0 ? " interactive-heat-cell" : ""}`}
+                    href={href}
+                    key={location}
+                    label={label}
+                  >
+                    {count}
+                  </HeatmapCell>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
+      <div className="heatmap-legend">
+        <span>Lower</span><i className="heat-level-1" /><i className="heat-level-2" />
+        <i className="heat-level-3" /><i className="heat-level-4" /><span>Higher</span>
+      </div>
+      <p className="dashboard-heatmap-note">Columns show locations. Rows show functions. A darker cell contains more employees; select a filled cell to open that intersection.</p>
     </div>
   );
 }
@@ -616,7 +630,12 @@ export function CrossPageWidgetContent({
     case "lifecycle-cohorts":
       return <JoiningCohortLineChart data={lifecycle.joining_cohorts} />;
     case "lifecycle-age-tenure":
-      return <AgeTenureHeatmap data={lifecycleMatrix} tenureBands={["Under 2", "2-5", "6-10", "11-20", "21+"]} />;
+      return (
+        <div className="dashboard-heatmap-content">
+          <AgeTenureHeatmap data={lifecycleMatrix} tenureBands={["Under 2", "2-5", "6-10", "11-20", "21+"]} />
+          <p className="dashboard-heatmap-note">Columns show employee age. Rows show completed years of service. A darker cell contains more employees.</p>
+        </div>
+      );
     case "lifecycle-location-exposure":
       return <RetirementExposureChart data={locationExposure} />;
     case "lifecycle-designation-exposure":

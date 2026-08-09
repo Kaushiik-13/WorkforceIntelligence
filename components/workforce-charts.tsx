@@ -48,31 +48,44 @@ type CategoryDefinition = {
   label: string;
 };
 
-function MeasuredChart({ children }: { children: (width: number) => ReactNode }) {
+function MeasuredChart({
+  children,
+}: {
+  children: (width: number, height: number) => ReactNode;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
+  const [dimensions, setDimensions] = useState({ height: 0, width: 0 });
 
   useLayoutEffect(() => {
     const measure = () => {
-      const nextWidth = Math.round(containerRef.current?.getBoundingClientRect().width ?? 0);
-      setWidth((currentWidth) => currentWidth === nextWidth ? currentWidth : nextWidth);
+      const bounds = containerRef.current?.getBoundingClientRect();
+      const nextDimensions = {
+        height: Math.round(bounds?.height ?? 0),
+        width: Math.round(bounds?.width ?? 0),
+      };
+      setDimensions((current) =>
+        current.height === nextDimensions.height && current.width === nextDimensions.width
+          ? current
+          : nextDimensions,
+      );
     };
 
     measure();
-    window.addEventListener("resize", measure);
-
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
-    if (containerRef.current) observer?.observe(containerRef.current);
+    if (observer && containerRef.current) observer.observe(containerRef.current);
+    else window.addEventListener("resize", measure);
 
     return () => {
-      observer?.disconnect();
-      window.removeEventListener("resize", measure);
+      if (observer) observer.disconnect();
+      else window.removeEventListener("resize", measure);
     };
   }, []);
 
   return (
     <div className="chart-area chart-tall" ref={containerRef}>
-      {width > 0 ? children(width) : null}
+      {dimensions.width > 0 && dimensions.height > 0
+        ? children(dimensions.width, dimensions.height)
+        : null}
     </div>
   );
 }
@@ -129,8 +142,8 @@ function CompositionBarChart({
   return (
     <>
       <MeasuredChart>
-        {(width) => (
-          <BarChart data={chartData} height={292} layout="vertical" margin={{ top: 10, right: 16, bottom: 0, left: 16 }} width={width}>
+        {(width, height) => (
+          <BarChart data={chartData} height={height} layout="vertical" margin={{ top: 10, right: 16, bottom: 0, left: 16 }} width={width}>
             <CartesianGrid horizontal={false} stroke={colors.grid} strokeDasharray="3 5" />
             <XAxis
               {...axis}
@@ -244,8 +257,8 @@ export function DesignationBarChart({
 
   return (
     <MeasuredChart>
-      {(width) => (
-        <BarChart data={chartData} height={292} layout="vertical" margin={{ top: 10, right: 18, bottom: 0, left: 18 }} width={width}>
+      {(width, height) => (
+        <BarChart data={chartData} height={height} layout="vertical" margin={{ top: 10, right: 18, bottom: 0, left: 18 }} width={width}>
           <CartesianGrid horizontal={false} stroke={colors.grid} strokeDasharray="3 5" />
           <XAxis {...axis} allowDecimals={false} domain={[0, "dataMax + 3"]} type="number" />
           <YAxis {...axis} dataKey="name" type="category" width={112} />
@@ -277,8 +290,8 @@ export function FunctionDistributionBarChart({
 
   return (
     <MeasuredChart>
-      {(width) => (
-        <BarChart data={chartData} height={292} layout="vertical" margin={{ top: 10, right: 18, bottom: 0, left: 18 }} width={width}>
+      {(width, height) => (
+        <BarChart data={chartData} height={height} layout="vertical" margin={{ top: 10, right: 18, bottom: 0, left: 18 }} width={width}>
           <CartesianGrid horizontal={false} stroke={colors.grid} strokeDasharray="3 5" />
           <XAxis {...axis} allowDecimals={false} domain={[0, "dataMax + 4"]} type="number" />
           <YAxis {...axis} dataKey="name" type="category" width={92} />
