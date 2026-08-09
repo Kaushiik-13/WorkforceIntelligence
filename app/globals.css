@@ -307,11 +307,10 @@ h1, h2, h3, p { margin: 0; }
 .organization-kpi-bento .metric-card:nth-child(5) { grid-column: span 5; }
 .organization-kpi-bento .metric-card:nth-child(6) { grid-column: span 3; }
 .organization-metrics .metric-card strong { font-size: 24px; }
-.organization-primary-grid, .organization-secondary-grid, .organization-footer-grid { display: grid; gap: 16px; margin-bottom: 16px; }
-.organization-primary-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
-.organization-secondary-grid { align-items: start; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
-.organization-footer-grid { grid-template-columns: minmax(0, 7fr) minmax(280px, 5fr); margin-bottom: 0; }
-.organization-primary-grid .panel, .organization-secondary-grid .panel { min-height: 385px; }
+.organization-primary-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); margin-bottom: 16px; }
+.organization-primary-grid .panel { min-height: 385px; }
+.organization-detail-bento { align-items: start; display: grid; gap: 16px; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+.organization-detail-column { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .heatmap-scroll { overflow-x: auto; padding-top: 18px; }
 .location-heatmap { display: grid; gap: 7px; }
 .location-heatmap > strong { color: #818581; font-size: 8px; font-weight: 700; overflow: hidden; text-align: center; text-overflow: ellipsis; text-transform: uppercase; }
@@ -343,7 +342,7 @@ h1, h2, h3, p { margin: 0; }
 .hrbp-summary strong { color: #456b50; display: block; font-size: 11px; }
 .hrbp-summary span { color: #7b8b80; display: block; font-size: 8px; margin-top: 2px; }
 .hrbp-table td:first-child { color: var(--ink); font-weight: 600; }
-.organization-insight-brief { height: 100%; margin-top: 0; max-width: none; }
+.organization-insight-brief { height: auto; margin-top: 0; max-width: none; }
 .organization-insight-copy { border-top: 1px solid var(--grid); display: grid; gap: 12px; margin-top: 15px; padding-top: 15px; }
 .organization-insight-copy p { color: #6f7671; font-size: 10px; line-height: 1.65; }
 .organization-insight-copy strong { color: var(--ink); }
@@ -480,6 +479,7 @@ h1, h2, h3, p { margin: 0; }
   .topbar { padding: 0 22px; }
   .filterbar { padding-left: 22px; padding-right: 22px; }
   .page-canvas { max-width: 100vw; overflow-x: hidden; padding-left: 22px; padding-right: 22px; }
+  .organization-detail-bento { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 700px) {
@@ -512,7 +512,7 @@ h1, h2, h3, p { margin: 0; }
   .workforce-filter-grid { grid-template-columns: 1fr; }
   .organization-filter-grid { grid-template-columns: 1fr; }
   .workforce-filter-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .workforce-kpi-bento, .workforce-primary-grid, .workforce-secondary-grid, .workforce-detail-grid, .organization-kpi-bento, .organization-primary-grid, .organization-secondary-grid, .organization-footer-grid { grid-template-columns: 1fr; }
+  .workforce-kpi-bento, .workforce-primary-grid, .workforce-secondary-grid, .workforce-detail-grid, .organization-kpi-bento, .organization-primary-grid { grid-template-columns: 1fr; }
   .workforce-kpi-bento .metric-card { grid-column: 1 / -1 !important; }
   .organization-kpi-bento .metric-card { grid-column: 1 / -1 !important; }
   .workforce-insight-copy { grid-template-columns: 1fr; }

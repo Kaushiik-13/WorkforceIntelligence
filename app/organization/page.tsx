@@ -286,78 +286,80 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
         </Panel>
       </section>
 
-      <section className="organization-secondary-grid">
-        <Panel
-          badge={`Average ${organization.workload_statistics.average ?? "—"}`}
-          subtitle="The 12 busiest masked primary assignments"
-          title="Primary HRBP workload"
-        >
-          <HrbpWorkloadChart average={organization.workload_statistics.average} data={organization.hrbp_workload} />
-          <p className="table-note">The dashed line is the overall average: filtered employees ÷ primary HRBPs. This measures coverage, not performance.</p>
-        </Panel>
+      <section className="organization-detail-bento">
+        <div className="organization-detail-column">
+          <Panel
+            badge={`Average ${organization.workload_statistics.average ?? "—"}`}
+            subtitle="The 12 busiest masked primary assignments"
+            title="Primary HRBP workload"
+          >
+            <HrbpWorkloadChart average={organization.workload_statistics.average} data={organization.hrbp_workload} />
+            <p className="table-note">The dashed line is the overall average: filtered employees ÷ primary HRBPs. This measures coverage, not performance.</p>
+          </Panel>
 
-        <Panel
-          badge="Top 12"
-          subtitle="How widely each masked primary HRBP spans the organization"
-          title="HRBP support breadth"
-        >
-          <div className="table-scroll organization-table-scroll">
-            <table className="data-table organization-hrbp-table">
-              <thead><tr><th>HRBP</th><th>Employees</th><th>Functions</th><th>Locations</th></tr></thead>
-              <tbody>
-                {organization.hrbp_breadth.map((item) => (
-                  <tr key={item.hrbp_label}>
-                    <td><strong>{item.hrbp_label}</strong></td>
-                    <td>{item.employee_count}</td>
-                    <td>{item.function_count}</td>
-                    <td>{item.location_count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="table-note">Labels are generated inside the database so source HRBP identifiers are not exposed.</p>
-        </Panel>
-      </section>
+          <Panel
+            className="fragmentation-panel"
+            subtitle="High uniqueness makes these fields poor executive grouping dimensions"
+            title="Organization-code fragmentation"
+          >
+            <div className="fragmentation-grid">
+              {organization.organization_fragmentation.map((item) => (
+                <article key={item.field_name}>
+                  <div><Network size={16} /><span>{item.field_name}</span></div>
+                  <strong>{item.fragmentation_percentage}<small>% unique</small></strong>
+                  <span className="fragment-track"><i style={{ width: `${item.fragmentation_percentage}%` }} /></span>
+                  <p>{item.distinct_values} distinct values across {counts.filtered_records} records</p>
+                </article>
+              ))}
+            </div>
+            <div className="governance-note">
+              <AlertTriangle size={16} />
+              <p><strong>Interpret carefully</strong>These are source-code fragmentation measures, not a confirmed reporting hierarchy.</p>
+            </div>
+          </Panel>
+        </div>
 
-      <section className="organization-footer-grid">
-        <Panel
-          className="fragmentation-panel"
-          subtitle="High uniqueness makes these fields poor executive grouping dimensions"
-          title="Organization-code fragmentation"
-        >
-          <div className="fragmentation-grid">
-            {organization.organization_fragmentation.map((item) => (
-              <article key={item.field_name}>
-                <div><Network size={16} /><span>{item.field_name}</span></div>
-                <strong>{item.fragmentation_percentage}<small>% unique</small></strong>
-                <span className="fragment-track"><i style={{ width: `${item.fragmentation_percentage}%` }} /></span>
-                <p>{item.distinct_values} distinct values across {counts.filtered_records} records</p>
-              </article>
-            ))}
-          </div>
-          <div className="governance-note">
-            <AlertTriangle size={16} />
-            <p><strong>Interpret carefully</strong>These are source-code fragmentation measures, not a confirmed reporting hierarchy.</p>
-          </div>
-        </Panel>
+        <div className="organization-detail-column">
+          <Panel
+            badge="Top 12"
+            subtitle="How widely each masked primary HRBP spans the organization"
+            title="HRBP support breadth"
+          >
+            <div className="table-scroll organization-table-scroll">
+              <table className="data-table organization-hrbp-table">
+                <thead><tr><th>HRBP</th><th>Employees</th><th>Functions</th><th>Locations</th></tr></thead>
+                <tbody>
+                  {organization.hrbp_breadth.map((item) => (
+                    <tr key={item.hrbp_label}>
+                      <td><strong>{item.hrbp_label}</strong></td>
+                      <td>{item.employee_count}</td>
+                      <td>{item.function_count}</td>
+                      <td>{item.location_count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="table-note">Labels are generated inside the database so source HRBP identifiers are not exposed.</p>
+          </Panel>
 
-        <article className="insight-brief-card organization-insight-brief">
-          <p className="page-eyebrow">Organization note</p>
-          <h2>{insights.largest_location ? `${insights.largest_location.location_name} is the largest location` : "No location concentration available"}</h2>
-          <div className="organization-insight-copy">
-            {insights.largest_location ? (
-              <p><strong>{insights.largest_location.employee_count} employees ({insights.largest_location.percentage}%)</strong> are based in {insights.largest_location.location_name}.</p>
-            ) : null}
-            {insights.strongest_site_specialization ? (
-              <p><strong>{insights.strongest_site_specialization.function_name}</strong> is the strongest local specialization in {insights.strongest_site_specialization.location_name}, accounting for <strong>{insights.strongest_site_specialization.percentage}%</strong> of that site.</p>
-            ) : null}
-            {insights.broadest_hrbp ? (
-              <p><strong>{insights.broadest_hrbp.hrbp_label}</strong> has the broadest support footprint: {insights.broadest_hrbp.employee_count} employees across {insights.broadest_hrbp.function_count} functions and {insights.broadest_hrbp.location_count} locations.</p>
-            ) : null}
-            <p>Primary workload ranges from <strong>{insights.hrbp_workload.minimum ?? "—"}</strong> to <strong>{insights.hrbp_workload.maximum ?? "—"}</strong> employees, with an average of <strong>{insights.hrbp_workload.average ?? "—"}</strong>. <strong>{insights.assignment_gaps}</strong> records have an HRBP assignment gap.</p>
-          </div>
-        </article>
+          <article className="insight-brief-card organization-insight-brief">
+            <p className="page-eyebrow">Organization note</p>
+            <h2>{insights.largest_location ? `${insights.largest_location.location_name} is the largest location` : "No location concentration available"}</h2>
+            <div className="organization-insight-copy">
+              {insights.largest_location ? (
+                <p><strong>{insights.largest_location.employee_count} employees ({insights.largest_location.percentage}%)</strong> are based in {insights.largest_location.location_name}.</p>
+              ) : null}
+              {insights.strongest_site_specialization ? (
+                <p><strong>{insights.strongest_site_specialization.function_name}</strong> is the strongest local specialization in {insights.strongest_site_specialization.location_name}, accounting for <strong>{insights.strongest_site_specialization.percentage}%</strong> of that site.</p>
+              ) : null}
+              {insights.broadest_hrbp ? (
+                <p><strong>{insights.broadest_hrbp.hrbp_label}</strong> has the broadest support footprint: {insights.broadest_hrbp.employee_count} employees across {insights.broadest_hrbp.function_count} functions and {insights.broadest_hrbp.location_count} locations.</p>
+              ) : null}
+              <p>Primary workload ranges from <strong>{insights.hrbp_workload.minimum ?? "—"}</strong> to <strong>{insights.hrbp_workload.maximum ?? "—"}</strong> employees, with an average of <strong>{insights.hrbp_workload.average ?? "—"}</strong>. <strong>{insights.assignment_gaps}</strong> records have an HRBP assignment gap.</p>
+            </div>
+          </article>
+        </div>
       </section>
     </>
   );
