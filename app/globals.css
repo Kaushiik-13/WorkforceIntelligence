@@ -1,3 +1,5 @@
+@import "./customizable-overview.css";
+
 :root {
   --canvas: #f4f1e9;
   --surface: #fffdf8;
