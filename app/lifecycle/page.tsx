@@ -3,12 +3,12 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import {
-  AgeTenureProfileChart,
   JoiningCohortLineChart,
   LifecycleDistributionChart,
   RetirementExposureChart,
   RetirementPipelineChart,
 } from "@/components/lifecycle-charts";
+import { AgeTenureHeatmap } from "@/components/charts";
 import { PageHeader, Panel } from "@/components/ui";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
@@ -183,17 +183,23 @@ export default async function LifecyclePage({ searchParams }: { searchParams: Se
   const largestCohort = lifecycle.insights.largest_joining_cohort;
   const activeFilters = Object.entries(lifecycle.applied_filters).filter(([, value]) => value);
   const horizonMetrics = [
-    { label: "1 year", value: kpis.retirement_exposure_1_year },
-    { label: "3 years", value: kpis.retirement_exposure_3_years },
-    { label: "5 years", value: kpis.retirement_exposure_5_years },
-    { label: "10 years", value: kpis.retirement_exposure_10_years },
-    { label: "15 years", value: kpis.retirement_exposure_15_years },
+    { label: "0–1 years", value: kpis.retirement_exposure_1_year },
+    { label: "2–3 years", value: Math.max(0, kpis.retirement_exposure_3_years - kpis.retirement_exposure_1_year) },
+    { label: "4–5 years", value: Math.max(0, kpis.retirement_exposure_5_years - kpis.retirement_exposure_3_years) },
+    { label: "6–10 years", value: Math.max(0, kpis.retirement_exposure_10_years - kpis.retirement_exposure_5_years) },
+    { label: "11–15 years", value: Math.max(0, kpis.retirement_exposure_15_years - kpis.retirement_exposure_10_years) },
   ];
   const selectedExposure = lifecycle.employee_lists.retirement_exposed.length;
   const selectedExposureRate = counts.filtered_records
     ? Number((selectedExposure * 100 / counts.filtered_records).toFixed(1))
     : 0;
   const firstExposureCheckpoint = horizonMetrics.find((metric) => metric.value > 0);
+  const ageTenureMatrix = lifecycle.age_tenure_matrix.map((item) => ({
+    ...item,
+    percentage: counts.filtered_records
+      ? Number((item.employee_count * 100 / counts.filtered_records).toFixed(1))
+      : 0,
+  }));
   const functionExposure = lifecycle.retirement_by_function.map((item) => ({
     ...item,
     name: item.function_name,
@@ -281,7 +287,7 @@ export default async function LifecyclePage({ searchParams }: { searchParams: Se
               {highestRateFunction ? <><strong>{highestRateFunction.function_name}</strong> has the highest proportional exposure at <strong>{highestRateFunction.exposed_rate}%</strong>.</> : <>No proportional exposure is present.</>}
             </p>
           </div>
-          <div className="lifecycle-outlook-timeline" aria-label="Cumulative retirement exposure checkpoints">
+          <div className="lifecycle-outlook-timeline" aria-label="Retirement exposure by separate planning period">
             {horizonMetrics.map((metric) => (
               <div key={metric.label}>
                 <span />
@@ -292,7 +298,7 @@ export default async function LifecyclePage({ searchParams }: { searchParams: Se
           </div>
           <footer>
             <span>Planning read</span>
-            <p>{firstExposureCheckpoint ? `The first non-zero checkpoint appears within ${firstExposureCheckpoint.label}.` : "No retirement exposure appears in the standard 15-year checkpoints."}</p>
+            <p>{firstExposureCheckpoint ? `The first retirement exposure appears in the ${firstExposureCheckpoint.label} period.` : "No retirement exposure appears in the standard 15-year periods."}</p>
           </footer>
         </article>
 
@@ -344,8 +350,9 @@ export default async function LifecyclePage({ searchParams }: { searchParams: Se
         <Panel subtitle="Current employees grouped by their joining year" title="Joining cohorts">
           <JoiningCohortLineChart data={lifecycle.joining_cohorts} />
         </Panel>
-        <Panel subtitle="Age composition split by completed tenure band" title="Age × tenure profile">
-          <AgeTenureProfileChart data={lifecycle.age_tenure_matrix} />
+        <Panel subtitle="Employee count at each age and completed-service combination" title="Age × tenure heatmap">
+          <AgeTenureHeatmap data={ageTenureMatrix} tenureBands={["Under 2", "2-5", "6-10", "11-20", "21+"]} />
+          <p className="lifecycle-heatmap-note">Columns show employee age. Rows show completed years of service. A darker cell contains more employees.</p>
         </Panel>
       </section>
 

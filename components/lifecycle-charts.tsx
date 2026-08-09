@@ -6,7 +6,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -238,55 +237,3 @@ export function JoiningCohortLineChart({
     </div>
   );
 }
-
-const tenureSeries = [
-  { dataKey: "Under 2", fill: colors.yellow },
-  { dataKey: "2-5", fill: colors.green },
-  { dataKey: "6-10", fill: colors.navy },
-  { dataKey: "11-20", fill: colors.coral },
-  { dataKey: "21+", fill: colors.purple },
-];
-
-export function AgeTenureProfileChart({
-  data,
-}: {
-  data: { age_band: string; employee_count: number; tenure_band: string }[];
-}) {
-  const ageBands = ["Under 25", "25-34", "35-44", "45-54", "55+"];
-  const chartData = ageBands.map((ageBand) => {
-    const row: Record<string, string | number> = { name: ageBand };
-    for (const series of tenureSeries) {
-      row[series.dataKey] = data.find(
-        (item) => item.age_band === ageBand && item.tenure_band === series.dataKey,
-      )?.employee_count ?? 0;
-    }
-    return row;
-  });
-
-  return (
-    <div className="lifecycle-profile-chart">
-      <ResponsiveContainer height="100%" width="100%">
-        <BarChart data={chartData} margin={{ top: 14, right: 12, bottom: 0, left: -13 }}>
-          <CartesianGrid stroke={colors.grid} strokeDasharray="3 5" vertical={false} />
-          <XAxis {...axis} dataKey="name" />
-          <YAxis {...axis} allowDecimals={false} />
-          <Tooltip
-            contentStyle={{ background: "#203849", border: 0, borderRadius: 10, color: "#fff", fontSize: 10 }}
-            cursor={{ fill: "rgba(40, 75, 99, 0.04)" }}
-          />
-          <Legend iconSize={7} wrapperStyle={{ color: colors.muted, fontSize: 9 }} />
-          {tenureSeries.map((series, index) => (
-            <Bar
-              dataKey={series.dataKey}
-              fill={series.fill}
-              key={series.dataKey}
-              radius={index === tenureSeries.length - 1 ? [5, 5, 0, 0] : 0}
-              stackId="tenure"
-            />
-          ))}
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-

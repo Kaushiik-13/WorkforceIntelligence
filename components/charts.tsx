@@ -248,10 +248,11 @@ export function LocationBarChart({
 }
 
 const ageBands = ["Under 25", "25-34", "35-44", "45-54", "55+"];
-const tenureBands = ["Under 2", "2-5", "6-10", "11-20", "20+"];
+const defaultTenureBands = ["Under 2", "2-5", "6-10", "11-20", "20+"];
 
 export function AgeTenureHeatmap({
   data,
+  tenureBands = defaultTenureBands,
 }: {
   data: {
     age_band: string;
@@ -259,6 +260,7 @@ export function AgeTenureHeatmap({
     employee_count: number;
     percentage: number;
   }[];
+  tenureBands?: string[];
 }) {
   const cells = new Map(
     data.map((item) => [`${item.age_band}|${item.tenure_band}`, item]),
