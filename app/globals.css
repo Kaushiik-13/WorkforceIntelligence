@@ -508,6 +508,17 @@ h1, h2, h3, p { margin: 0; }
 .action-button:hover { box-shadow: 0 8px 20px rgba(30,44,48,.08); transform: translateY(-1px); }
 .action-button.primary { background: var(--coral); border-color: var(--coral); box-shadow: 0 9px 22px rgba(240,100,73,.2); color: #fff; }
 .employee-panel { min-height: 770px; padding-bottom: 12px; }
+.employee-filter-grid { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(220px, 1.55fr) repeat(4, minmax(105px, 1fr)) auto; }
+.employee-search-control { display: grid; gap: 5px; }
+.employee-search-control > span { color: #838883; font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.employee-search-control > div { align-items: center; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 9px; display: flex; gap: 7px; height: 39px; padding: 0 10px; }
+.employee-search-control svg { color: #929691; flex: 0 0 auto; }
+.employee-search-control input { background: transparent; border: 0; font-size: 10px; min-width: 0; outline: 0; width: 100%; }
+.employee-directory-table { min-width: 1120px; }
+.employee-directory-table td { white-space: nowrap; }
+.employee-table-message { color: #8b8f8a !important; height: 180px !important; text-align: center; }
+.employee-error { align-items: flex-start; background: #fff1ee; border: 1px solid #efc9c1; border-radius: 10px; color: #a94b39; display: flex; flex-direction: column; font-size: 9px; gap: 3px; margin: 14px 0 3px; padding: 11px 13px; }
+.employee-error span { color: #8c6b65; }
 .panel-floating-action { position: absolute; right: 19px; top: 17px; }
 .employee-table { margin-top: 12px; min-width: 900px; }
 .employee-table td { height: 59px; padding: 10px; }
@@ -632,6 +643,7 @@ h1, h2, h3, p { margin: 0; }
   .action-button { min-height: 37px; }
   .workforce-filter-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
   .workforce-filter-grid { grid-template-columns: 1fr; }
+  .employee-filter-grid { grid-template-columns: 1fr; }
   .organization-filter-grid { grid-template-columns: 1fr; }
   .lifecycle-filter-grid { grid-template-columns: 1fr; }
   .lifecycle-filter-grid .workforce-filter-actions { grid-column: 1; justify-content: stretch; }
