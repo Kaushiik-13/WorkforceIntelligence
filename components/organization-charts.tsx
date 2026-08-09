@@ -19,6 +19,29 @@ type WorkloadPoint = {
   hrbp_label: string;
 };
 
+function HrbpAxisTick({
+  payload,
+  x = 0,
+  y = 0,
+}: {
+  payload?: { value?: string };
+  x?: number;
+  y?: number;
+}) {
+  return (
+    <text
+      dominantBaseline="middle"
+      fill="#6f756f"
+      fontSize={9}
+      textAnchor="end"
+      x={x}
+      y={y}
+    >
+      {payload?.value ?? ""}
+    </text>
+  );
+}
+
 function WorkloadTooltip({ active, payload }: TooltipContentProps) {
   if (!active || !payload?.length) return null;
 
@@ -66,10 +89,11 @@ export function HrbpWorkloadChart({
           <YAxis
             axisLine={false}
             dataKey="hrbp_label"
-            tick={{ fill: "#6f756f", fontSize: 9 }}
+            interval={0}
+            tick={<HrbpAxisTick />}
             tickLine={false}
             type="category"
-            width={62}
+            width={72}
           />
           <Tooltip content={WorkloadTooltip} cursor={{ fill: "rgba(40, 75, 99, 0.05)" }} />
           {average !== null ? (
