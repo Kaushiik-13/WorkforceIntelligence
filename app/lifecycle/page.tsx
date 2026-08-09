@@ -1,4 +1,4 @@
-import { AlertTriangle, RotateCcw } from "lucide-react";
+import { AlertTriangle, CalendarCheck2, ChevronDown, RotateCcw, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
 
@@ -376,6 +376,7 @@ export default async function LifecyclePage({ searchParams }: { searchParams: Se
         <EmployeeDetails
           count={lifecycle.employee_lists.retirement_exposed.length}
           description={`Employees retiring within the selected ${selectedHorizon}-year horizon`}
+          tone="exposure"
           title="Retirement-exposed employees"
         >
           <div className="table-scroll">
@@ -391,6 +392,7 @@ export default async function LifecyclePage({ searchParams }: { searchParams: Se
         <EmployeeDetails
           count={lifecycle.employee_lists.service_anniversaries.length}
           description={`Employees reaching 5, 10, 15 or 20 years of service in ${selectedYear}`}
+          tone="milestone"
           title="Service milestone employees"
         >
           <div className="table-scroll">
@@ -451,19 +453,33 @@ function EmployeeDetails({
   count,
   description,
   title,
-  tone = "default",
+  tone,
 }: {
   children: React.ReactNode;
   count: number;
   description: string;
   title: string;
-  tone?: "default" | "warning";
+  tone: "exposure" | "milestone" | "warning";
 }) {
+  const Icon = tone === "warning" ? AlertTriangle : tone === "milestone" ? CalendarCheck2 : UsersRound;
+  const eyebrow = tone === "warning" ? "Data review" : tone === "milestone" ? "Recognition planning" : "Retirement planning";
+
   return (
-    <details className={`lifecycle-detail-panel ${tone === "warning" ? "warning" : ""}`}>
+    <details className={`lifecycle-detail-panel ${tone}`}>
       <summary>
-        <div><strong>{title}</strong><span>{description}</span></div>
-        <b>{count}</b>
+        <div className="lifecycle-detail-topline">
+          <span className="lifecycle-detail-icon"><Icon aria-hidden="true" size={15} /></span>
+          <span>{eyebrow}</span>
+        </div>
+        <strong className="lifecycle-detail-count">{count}</strong>
+        <div className="lifecycle-detail-copy">
+          <h3>{title}</h3>
+          <p>{description}</p>
+        </div>
+        <div className="lifecycle-detail-action">
+          <span>View employee records</span>
+          <ChevronDown aria-hidden="true" size={15} />
+        </div>
       </summary>
       <div className="lifecycle-detail-content">
         {children}
