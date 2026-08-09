@@ -6,6 +6,7 @@ import {
   Plus,
   RotateCcw,
   Search,
+  SlidersHorizontal,
   Trash2,
   X,
 } from "lucide-react";
@@ -39,7 +40,21 @@ type EmployeeForm = {
 type EmployeeResponse = { data: Employee[]; total: number };
 type EmployeeMutationResponse = { data: Employee };
 
+type DirectoryFilters = {
+  employeeGroup: string;
+  functionName: string;
+  gender: string;
+  location: string;
+};
+
 const pageSize = 10;
+
+const emptyDirectoryFilters: DirectoryFilters = {
+  employeeGroup: "",
+  functionName: "",
+  gender: "",
+  location: "",
+};
 
 const emptyEmployeeForm: EmployeeForm = {
   birth_date: "",
@@ -107,7 +122,6 @@ function FormField({
   type = "text",
   value,
   required = false,
-  list,
   onChange,
 }: {
   label: string;
@@ -115,7 +129,6 @@ function FormField({
   type?: "date" | "text";
   value: string;
   required?: boolean;
-  list?: string;
   onChange: (name: keyof EmployeeForm, value: string) => void;
 }) {
   return (
@@ -123,7 +136,6 @@ function FormField({
       <span>{label}{required ? " *" : ""}</span>
       <input
         autoComplete="off"
-        list={list}
         maxLength={type === "text" ? 160 : undefined}
         name={name}
         onChange={(event) => onChange(name, event.target.value)}
@@ -135,8 +147,59 @@ function FormField({
   );
 }
 
+function FormSelect({
+  label,
+  name,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  name: keyof EmployeeForm;
+  options: string[];
+  value: string;
+  onChange: (name: keyof EmployeeForm, value: string) => void;
+}) {
+  const visibleOptions = value && !options.includes(value)
+    ? [...options, value].sort((first, second) => first.localeCompare(second))
+    : options;
+
+  return (
+    <label className="employee-form-field">
+      <span>{label}</span>
+      <select name={name} onChange={(event) => onChange(name, event.target.value)} value={value}>
+        <option value="">Not specified</option>
+        {visibleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function DirectoryFilterSelect({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: string[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="workforce-filter-control employee-directory-filter">
+      <span>{label}</span>
+      <select onChange={(event) => onChange(event.target.value)} value={value}>
+        <option value="">All</option>
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+    </label>
+  );
+}
+
 export function EmployeeExplorer() {
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
+  const [directoryFilters, setDirectoryFilters] = useState<DirectoryFilters>(emptyDirectoryFilters);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -148,6 +211,7 @@ export function EmployeeExplorer() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [showEditor, setShowEditor] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -185,11 +249,18 @@ export function EmployeeExplorer() {
   const filteredEmployees = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase();
     return employees.filter((employee) => {
-      return !normalizedSearch
+      const matchesSearch = !normalizedSearch
         || employee.personnel_number?.toLocaleLowerCase().includes(normalizedSearch)
         || employee.designation?.toLocaleLowerCase().includes(normalizedSearch);
+      return matchesSearch
+        && (!directoryFilters.functionName || employee.function_name === directoryFilters.functionName)
+        && (!directoryFilters.location || employee.location_name === directoryFilters.location)
+        && (!directoryFilters.employeeGroup || employee.employee_group === directoryFilters.employeeGroup)
+        && (!directoryFilters.gender || employee.gender_key === directoryFilters.gender);
     });
-  }, [employees, search]);
+  }, [directoryFilters, employees, search]);
+
+  const activeFilterCount = Object.values(directoryFilters).filter(Boolean).length;
 
   const pageCount = Math.max(1, Math.ceil(filteredEmployees.length / pageSize));
   const currentPage = Math.min(page, pageCount);
@@ -213,6 +284,11 @@ export function EmployeeExplorer() {
 
   function updateFormValue(name: keyof EmployeeForm, value: string) {
     setFormValues((current) => ({ ...current, [name]: value }));
+  }
+
+  function updateDirectoryFilter(name: keyof DirectoryFilters, value: string) {
+    setDirectoryFilters((current) => ({ ...current, [name]: value }));
+    setPage(1);
   }
 
   async function saveEmployee(event: FormEvent<HTMLFormElement>) {
@@ -279,8 +355,22 @@ export function EmployeeExplorer() {
             <span>Search</span>
             <div><Search aria-hidden="true" size={14} /><input onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Personnel number or designation" value={search} /></div>
           </label>
-          {search ? <button className="action-button" onClick={() => { setSearch(""); setPage(1); }} type="button"><RotateCcw aria-hidden="true" size={13} />Clear search</button> : null}
+          <div className="employee-search-actions">
+            {search ? <button className="action-button" onClick={() => { setSearch(""); setPage(1); }} type="button"><RotateCcw aria-hidden="true" size={13} />Clear search</button> : null}
+            <button className={`action-button employee-filter-toggle${showFilters ? " active" : ""}`} onClick={() => setShowFilters((current) => !current)} type="button">
+              <SlidersHorizontal aria-hidden="true" size={14} />Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
+            </button>
+          </div>
         </div>
+        {showFilters ? (
+          <div className="employee-filter-drawer">
+            <DirectoryFilterSelect label="Function" onChange={(value) => updateDirectoryFilter("functionName", value)} options={filterOptions.functions} value={directoryFilters.functionName} />
+            <DirectoryFilterSelect label="Location" onChange={(value) => updateDirectoryFilter("location", value)} options={filterOptions.locations} value={directoryFilters.location} />
+            <DirectoryFilterSelect label="Employee group" onChange={(value) => updateDirectoryFilter("employeeGroup", value)} options={filterOptions.employee_groups} value={directoryFilters.employeeGroup} />
+            <DirectoryFilterSelect label="Gender" onChange={(value) => updateDirectoryFilter("gender", value)} options={filterOptions.genders} value={directoryFilters.gender} />
+            <button className="action-button" disabled={!activeFilterCount} onClick={() => { setDirectoryFilters(emptyDirectoryFilters); setPage(1); }} type="button"><RotateCcw aria-hidden="true" size={13} />Reset filters</button>
+          </div>
+        ) : null}
       </section>
 
       <section className="panel employee-panel">
@@ -348,20 +438,15 @@ export function EmployeeExplorer() {
             <form onSubmit={saveEmployee}>
               <div className="employee-form-grid">
                 <FormField label="Personnel number" name="personnel_number" onChange={updateFormValue} required value={formValues.personnel_number} />
-                <FormField label="Employee group" list="employee-groups" name="employee_group" onChange={updateFormValue} value={formValues.employee_group} />
-                <FormField label="Function" list="employee-functions" name="function_name" onChange={updateFormValue} value={formValues.function_name} />
-                <FormField label="Location" list="employee-locations" name="location_name" onChange={updateFormValue} value={formValues.location_name} />
-                <FormField label="Gender key" list="employee-genders" name="gender_key" onChange={updateFormValue} value={formValues.gender_key} />
-                <FormField label="Designation" list="employee-designations" name="designation" onChange={updateFormValue} value={formValues.designation} />
+                <FormSelect label="Employee group" name="employee_group" onChange={updateFormValue} options={filterOptions.employee_groups} value={formValues.employee_group} />
+                <FormSelect label="Function" name="function_name" onChange={updateFormValue} options={filterOptions.functions} value={formValues.function_name} />
+                <FormSelect label="Location" name="location_name" onChange={updateFormValue} options={filterOptions.locations} value={formValues.location_name} />
+                <FormSelect label="Gender key" name="gender_key" onChange={updateFormValue} options={filterOptions.genders} value={formValues.gender_key} />
+                <FormSelect label="Designation" name="designation" onChange={updateFormValue} options={filterOptions.designations} value={formValues.designation} />
                 <FormField label="Birth date" name="birth_date" onChange={updateFormValue} type="date" value={formValues.birth_date} />
                 <FormField label="Date of joining" name="joining_date" onChange={updateFormValue} type="date" value={formValues.joining_date} />
                 <FormField label="Entry for retirement" name="retirement_date" onChange={updateFormValue} type="date" value={formValues.retirement_date} />
               </div>
-              <datalist id="employee-groups">{filterOptions.employee_groups.map((value) => <option key={value} value={value} />)}</datalist>
-              <datalist id="employee-functions">{filterOptions.functions.map((value) => <option key={value} value={value} />)}</datalist>
-              <datalist id="employee-locations">{filterOptions.locations.map((value) => <option key={value} value={value} />)}</datalist>
-              <datalist id="employee-genders">{filterOptions.genders.map((value) => <option key={value} value={value} />)}</datalist>
-              <datalist id="employee-designations">{filterOptions.designations.map((value) => <option key={value} value={value} />)}</datalist>
               {formError ? <div className="employee-form-error" role="alert">{formError}</div> : null}
               <footer>
                 <button className="action-button" disabled={saving} onClick={() => setShowEditor(false)} type="button">Cancel</button>
@@ -376,7 +461,7 @@ export function EmployeeExplorer() {
       ) : null}
 
       {deleteTarget ? (
-        <div className="employee-modal-backdrop">
+        <div className="employee-modal-backdrop employee-delete-backdrop">
           <section aria-labelledby="employee-delete-title" aria-modal="true" className="employee-modal employee-delete-modal" role="alertdialog">
             <header>
               <div>
