@@ -15,7 +15,7 @@ export async function GET() {
       .from("employees")
       .select(employeeColumns)
       .order("Personnel Number", { ascending: true })
-      .limit(1000);
+      .limit(5000);
 
     if (error) return databaseError("Unable to load employee records.", error);
 

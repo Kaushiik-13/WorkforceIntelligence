@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Download,
   LoaderCircle,
   Pencil,
   Plus,
@@ -104,6 +105,11 @@ function sortEmployees(rows: Employee[]) {
     (first.personnel_number ?? "").localeCompare(second.personnel_number ?? "", undefined, {
       numeric: true,
     }));
+}
+
+function csvValue(value: string | null) {
+  const text = value ?? "";
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 async function responsePayload<T extends object>(response: Response) {
@@ -291,6 +297,40 @@ export function EmployeeExplorer() {
     setPage(1);
   }
 
+  function exportFilteredEmployees() {
+    const headers = [
+      "Personnel Number",
+      "Employee Group",
+      "Function",
+      "Location",
+      "Gender Key",
+      "Birth date",
+      "Date of Joining",
+      "Entry for Retirement",
+      "Designation Text",
+    ];
+    const rows = filteredEmployees.map((employee) => [
+      employee.personnel_number,
+      employee.employee_group,
+      employee.function_name,
+      employee.location_name,
+      employee.gender_key,
+      employee.birth_date,
+      employee.joining_date,
+      employee.retirement_date,
+      employee.designation,
+    ].map(csvValue).join(","));
+    const csv = `\uFEFF${headers.join(",")}\r\n${rows.join("\r\n")}`;
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `employees-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   async function saveEmployee(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
@@ -378,6 +418,7 @@ export function EmployeeExplorer() {
           <div><h2>Employee master</h2><p>{loading ? "Loading employee records…" : `Showing ${firstRecord}–${lastRecord} of ${filteredEmployees.length} records`}</p></div>
           <div className="employee-header-actions">
             <span className="panel-badge">Page {currentPage} of {pageCount}</span>
+            <button className="action-button" disabled={loading || filteredEmployees.length === 0} onClick={exportFilteredEmployees} type="button"><Download aria-hidden="true" size={15} />Export filtered</button>
             <button className="action-button primary" onClick={openCreate} type="button"><Plus aria-hidden="true" size={15} />Add employee</button>
           </div>
         </div>
