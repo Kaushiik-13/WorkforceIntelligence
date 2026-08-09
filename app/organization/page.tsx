@@ -3,7 +3,10 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { LocationBarChart } from "@/components/charts";
-import { HrbpWorkloadChart } from "@/components/organization-charts";
+import {
+  HrbpWorkloadChart,
+  HrbpWorkloadDistributionChart,
+} from "@/components/organization-charts";
 import { MetricCard, PageHeader, Panel } from "@/components/ui";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
@@ -24,6 +27,8 @@ type OrganizationOverview = {
     assignment_gaps: number;
     average_primary_hrbp_workload: number | null;
     locations: number;
+    multi_function_hrbps: number;
+    multi_location_hrbps: number;
     organizational_units: number;
     primary_hrbps: number;
     secondary_hrbps: number;
@@ -51,6 +56,13 @@ type OrganizationOverview = {
   hrbp_workload: {
     employee_count: number;
     hrbp_label: string;
+  }[];
+  hrbp_workload_distribution: {
+    display_order: number;
+    employee_count: number;
+    hrbp_count: number;
+    hrbp_percentage: number;
+    workload_band: string;
   }[];
   hrbp_breadth: {
     employee_count: number;
@@ -295,6 +307,27 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
           >
             <HrbpWorkloadChart average={organization.workload_statistics.average} data={organization.hrbp_workload} />
             <p className="table-note">The dashed line is the overall average: filtered employees ÷ primary HRBPs. This measures coverage, not performance.</p>
+          </Panel>
+
+          <Panel
+            badge={`${kpis.primary_hrbps} primary HRBPs`}
+            subtitle="How assignment volume and organizational reach are distributed"
+            title="HRBP coverage pattern"
+          >
+            <div className="organization-coverage-summary">
+              <article>
+                <span>Multi-function HRBPs</span>
+                <strong>{kpis.multi_function_hrbps}<small>{kpis.primary_hrbps > 0 ? `${((kpis.multi_function_hrbps / kpis.primary_hrbps) * 100).toFixed(1)}%` : "0%"}</small></strong>
+                <p>Support employees across more than one function</p>
+              </article>
+              <article>
+                <span>Multi-location HRBPs</span>
+                <strong>{kpis.multi_location_hrbps}<small>{kpis.primary_hrbps > 0 ? `${((kpis.multi_location_hrbps / kpis.primary_hrbps) * 100).toFixed(1)}%` : "0%"}</small></strong>
+                <p>Support employees across more than one location</p>
+              </article>
+            </div>
+            <HrbpWorkloadDistributionChart data={organization.hrbp_workload_distribution} />
+            <p className="table-note">Bands count primary HRBPs by assigned employees in the current filter context.</p>
           </Panel>
 
           <Panel

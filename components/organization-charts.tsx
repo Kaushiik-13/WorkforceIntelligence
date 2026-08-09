@@ -19,6 +19,14 @@ type WorkloadPoint = {
   hrbp_label: string;
 };
 
+type WorkloadDistributionPoint = {
+  display_order: number;
+  employee_count: number;
+  hrbp_count: number;
+  hrbp_percentage: number;
+  workload_band: string;
+};
+
 function HrbpAxisTick({
   payload,
   x = 0,
@@ -52,6 +60,21 @@ function WorkloadTooltip({ active, payload }: TooltipContentProps) {
       <p>{point.hrbp_label}</p>
       <strong>{point.employee_count} employees</strong>
       <span>Primary assignments in the current view</span>
+    </div>
+  );
+}
+
+function WorkloadDistributionTooltip({ active, payload }: TooltipContentProps) {
+  if (!active || !payload?.length) return null;
+
+  const point = payload[0].payload as WorkloadDistributionPoint & { name: string };
+
+  return (
+    <div className="chart-tooltip">
+      <p>{point.name}</p>
+      <strong>{point.hrbp_count} primary HRBPs</strong>
+      <span>{point.hrbp_percentage}% of primary HRBPs</span>
+      <span>{point.employee_count} employees covered</span>
     </div>
   );
 }
@@ -113,6 +136,63 @@ export function HrbpWorkloadChart({
             ))}
             <LabelList
               dataKey="employee_count"
+              fill="#59605d"
+              fontSize={9}
+              fontWeight={650}
+              offset={7}
+              position="right"
+            />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export function HrbpWorkloadDistributionChart({
+  data,
+}: {
+  data: WorkloadDistributionPoint[];
+}) {
+  if (data.length === 0) {
+    return <div className="chart-empty-state organization-distribution-chart">No HRBP workload bands match these filters.</div>;
+  }
+
+  const chartData = data.map((item) => ({
+    ...item,
+    name: `${item.workload_band} ${item.workload_band === "1" ? "employee" : "employees"}`,
+  }));
+
+  return (
+    <div className="organization-distribution-chart">
+      <ResponsiveContainer height="100%" width="100%">
+        <BarChart
+          data={chartData}
+          layout="vertical"
+          margin={{ bottom: 0, left: 8, right: 34, top: 8 }}
+        >
+          <CartesianGrid horizontal={false} stroke="#e5e3dd" strokeDasharray="3 5" />
+          <XAxis
+            allowDecimals={false}
+            axisLine={false}
+            domain={[0, "dataMax + 5"]}
+            tick={{ fill: "#6f756f", fontSize: 9 }}
+            tickLine={false}
+            type="number"
+          />
+          <YAxis
+            axisLine={false}
+            dataKey="name"
+            interval={0}
+            tick={<HrbpAxisTick />}
+            tickLine={false}
+            type="category"
+            width={84}
+          />
+          <Tooltip content={WorkloadDistributionTooltip} cursor={{ fill: "rgba(40, 75, 99, 0.05)" }} />
+          <Bar animationDuration={420} dataKey="hrbp_count" fill="#78a083" radius={[0, 6, 6, 0]}>
+            <LabelList
+              dataKey="hrbp_count"
               fill="#59605d"
               fontSize={9}
               fontWeight={650}
