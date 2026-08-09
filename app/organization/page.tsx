@@ -1,4 +1,4 @@
-import { AlertTriangle, Network } from "lucide-react";
+import { AlertTriangle, CircleHelp, Network } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
 
@@ -120,6 +120,15 @@ function heatTone(value: number, maximum: number) {
   return "heat-level-4";
 }
 
+function PanelHelp({ children }: { children: string }) {
+  return (
+    <details className="panel-help">
+      <summary><CircleHelp aria-hidden="true" size={14} />How to read</summary>
+      <p>{children}</p>
+    </details>
+  );
+}
+
 export default async function OrganizationPage({ searchParams }: { searchParams: SearchParams }) {
   await connection();
 
@@ -207,6 +216,11 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
             {activeFilters.map(([key, value]) => <b key={key}>{key}: {value}</b>)}
           </div>
         ) : null}
+        <p className="organization-scope-summary">
+          Showing <strong>{counts.filtered_records}</strong> employees
+          {filters.functionName ? <> in <strong>{filters.functionName}</strong></> : null}
+          {filters.location ? <> at <strong>{filters.location}</strong></> : <> across <strong>{kpis.locations}</strong> locations</>}.
+        </p>
       </form>
 
       <section className="organization-kpi-bento organization-metrics">
@@ -249,7 +263,12 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
           subtitle="Distinct employees grouped by location"
           title="Workforce by location"
         >
-          <LocationBarChart data={organization.location_distribution} />
+          <LocationBarChart
+            data={organization.location_distribution}
+            filterFunction={filters.functionName}
+            interactive
+          />
+          <p className="chart-interaction-hint">Select a bar to filter the page to that location.</p>
         </Panel>
 
         <Panel
@@ -275,14 +294,20 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
                       {matrixLocations.map((location) => {
                         const item = matrix.get(`${functionName}::${location}`);
                         const count = item?.employee_count ?? 0;
-                        return (
-                          <span
-                            className={heatTone(count, maximumMatrixCount)}
+                        const label = `${functionName} in ${location}: ${count} employees · ${item?.function_percentage ?? 0}% of function · ${item?.location_percentage ?? 0}% of location`;
+
+                        return count > 0 ? (
+                          <Link
+                            aria-label={`Filter to ${functionName} in ${location}, ${count} employees`}
+                            className={`${heatTone(count, maximumMatrixCount)} interactive-heat-cell`}
+                            href={{ pathname: "/organization", query: { function: functionName, location } }}
                             key={location}
-                            title={`${functionName} in ${location}: ${count} employees · ${item?.function_percentage ?? 0}% of function · ${item?.location_percentage ?? 0}% of location`}
+                            title={label}
                           >
                             {count}
-                          </span>
+                          </Link>
+                        ) : (
+                          <span className={heatTone(count, maximumMatrixCount)} key={location} title={label}>0</span>
                         );
                       })}
                     </div>
@@ -293,6 +318,7 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
                 <span>Lower</span><i className="heat-level-1" /><i className="heat-level-2" />
                 <i className="heat-level-3" /><i className="heat-level-4" /><span>Higher</span>
               </div>
+              <p className="chart-interaction-hint">Select a filled cell to filter by its function and location.</p>
             </>
           ) : <div className="chart-empty-state">No location intersections match these filters.</div>}
         </Panel>
@@ -305,6 +331,7 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
             subtitle="The 12 busiest masked primary assignments"
             title="Primary HRBP workload"
           >
+            <PanelHelp>Each bar is one primary HRBP. The bar length and end label show how many employees are assigned to that HRBP.</PanelHelp>
             <HrbpWorkloadChart average={organization.workload_statistics.average} data={organization.hrbp_workload} />
             <p className="table-note">The dashed line is the overall average: filtered employees ÷ primary HRBPs. This measures coverage, not performance.</p>
           </Panel>
@@ -314,6 +341,7 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
             subtitle="How assignment volume and organizational reach are distributed"
             title="HRBP coverage pattern"
           >
+            <PanelHelp>The two large numbers count HRBPs. Each green bar groups HRBPs by whether they support 1, 2, 3, or 4+ employees.</PanelHelp>
             <div className="organization-coverage-summary">
               <article>
                 <span>Multi-function HRBPs</span>
@@ -358,6 +386,7 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
             subtitle="How widely each masked primary HRBP spans the organization"
             title="HRBP support breadth"
           >
+            <PanelHelp>Employees is assignment volume. Functions and Locations show how widely each masked HRBP&apos;s assigned employees are distributed.</PanelHelp>
             <div className="table-scroll organization-table-scroll">
               <table className="data-table organization-hrbp-table">
                 <thead><tr><th>HRBP</th><th>Employees</th><th>Functions</th><th>Locations</th></tr></thead>
