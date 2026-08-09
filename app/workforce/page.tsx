@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { connection } from "next/server";
 
-import { FunctionBarChart } from "@/components/charts";
 import {
   DesignationBarChart,
   EmployeeGroupByFunctionChart,
+  FunctionDistributionBarChart,
   GenderByFunctionChart,
 } from "@/components/workforce-charts";
 import { MetricCard, PageHeader, Panel } from "@/components/ui";
@@ -220,7 +220,7 @@ export default async function WorkforcePage({ searchParams }: { searchParams: Se
             return (
               <label className="workforce-filter-control" key={filter.key}>
                 <span>{filter.label}</span>
-                <select defaultValue={currentValue ?? ""} name={filter.key}>
+                <select aria-label={filter.label} defaultValue={currentValue ?? ""} name={filter.key}>
                   <option value="">All</option>
                   {workforce.filter_options[filter.optionKey].map((option) => (
                     <option key={option} value={option}>
@@ -250,12 +250,7 @@ export default async function WorkforcePage({ searchParams }: { searchParams: Se
         ) : null}
       </form>
 
-      <section className="metric-grid metric-grid-eight workforce-metrics">
-        <MetricCard
-          label="Employees in scope"
-          note={`${counts.filtered_records === counts.total_records ? "Entire" : "Filtered"} employee population`}
-          value={String(counts.filtered_records)}
-        />
+      <section className="workforce-kpi-bento workforce-metrics">
         <MetricCard
           label="Largest function"
           note={kpis.largest_function ? `${kpis.largest_function.employee_count} employees in this view` : "No classified records"}
@@ -291,15 +286,9 @@ export default async function WorkforcePage({ searchParams }: { searchParams: Se
           note="Functions remaining after filters"
           value={String(kpis.functions_represented)}
         />
-        <MetricCard
-          label="Unclassified records"
-          note="Missing function, group, gender, or designation"
-          tone={kpis.unclassified_records > 0 ? "yellow" : "green"}
-          value={String(kpis.unclassified_records)}
-        />
       </section>
 
-      <section className="workforce-primary-grid">
+      <section className="workforce-primary-grid workforce-bento-row">
         <Panel
           badge="100% within function"
           subtitle="F and M source codes shown as a share of each function"
@@ -316,13 +305,13 @@ export default async function WorkforcePage({ searchParams }: { searchParams: Se
         </Panel>
       </section>
 
-      <section className="workforce-secondary-grid">
+      <section className="workforce-secondary-grid workforce-bento-row">
         <Panel
           badge={`${kpis.functions_represented} functions`}
           subtitle="Employee count and share of the current population"
           title="Function distribution"
         >
-          <FunctionBarChart data={workforce.function_distribution} />
+          <FunctionDistributionBarChart data={workforce.function_distribution} />
         </Panel>
         <Panel
           badge={`${kpis.distinct_designations} roles`}
@@ -410,21 +399,33 @@ export default async function WorkforcePage({ searchParams }: { searchParams: Se
           </div>
         </Panel>
 
-        <Panel
-          subtitle="Missing values in the fields used by this page"
-          title="Composition completeness"
-        >
-          <div className="workforce-completeness-list">
-            {workforce.composition_completeness.map((item) => (
-              <div key={item.field_name}>
-                <span>{item.field_name}</span>
-                <strong>{item.missing_count}</strong>
-                <p>{item.percentage}% missing</p>
-                <i><b style={{ width: `${Math.min(item.percentage, 100)}%` }} /></i>
-              </div>
-            ))}
+        <section className="insight-brief-card workforce-insight-brief">
+          <div className="insight-brief-header">
+            <p>Composition note</p>
+            <span>As of {formatAsOfDate(workforce.as_of_date)}</span>
           </div>
-        </Panel>
+          <div className="workforce-insight-copy">
+            {insights.highest_direct_share ? (
+              <p>
+                <strong>{insights.highest_direct_share.function_name}</strong> has the highest Direct share at{" "}
+                <strong>{insights.highest_direct_share.percentage}%</strong> ({insights.highest_direct_share.employee_count} of {insights.highest_direct_share.function_total}).
+              </p>
+            ) : null}
+            {insights.largest_gender_variance ? (
+              <p>
+                <strong>{insights.largest_gender_variance.function_name}</strong> has the largest F-code variance: <strong>{insights.largest_gender_variance.f_percentage}%</strong>, {insights.largest_gender_variance.difference_percentage_points} points from the filtered average.
+              </p>
+            ) : null}
+            {insights.highest_role_concentration ? (
+              <p>
+                Role concentration is highest in <strong>{insights.highest_role_concentration.function_name}</strong>, where <strong>{insights.highest_role_concentration.dominant_designation}</strong> represents {insights.highest_role_concentration.dominant_designation_percentage}%.
+              </p>
+            ) : null}
+            <p>
+              The top three functions account for <strong>{insights.top_three_function_concentration.percentage}%</strong> of employees, while <strong>{insights.unclassified_records.employee_count}</strong> records are unclassified.
+            </p>
+          </div>
+        </section>
       </section>
 
       <Panel
@@ -449,33 +450,6 @@ export default async function WorkforcePage({ searchParams }: { searchParams: Se
         </div>
       </Panel>
 
-      <section className="insight-brief-card workforce-insight-brief">
-        <div className="insight-brief-header">
-          <p>Composition note</p>
-          <span>As of {formatAsOfDate(workforce.as_of_date)}</span>
-        </div>
-        <div className="workforce-insight-copy">
-          {insights.highest_direct_share ? (
-            <p>
-              <strong>{insights.highest_direct_share.function_name}</strong> has the highest Direct share at{" "}
-              <strong>{insights.highest_direct_share.percentage}%</strong> ({insights.highest_direct_share.employee_count} of {insights.highest_direct_share.function_total}).
-            </p>
-          ) : null}
-          {insights.largest_gender_variance ? (
-            <p>
-              <strong>{insights.largest_gender_variance.function_name}</strong> has the largest F-code variance: <strong>{insights.largest_gender_variance.f_percentage}%</strong>, {insights.largest_gender_variance.difference_percentage_points} points from the filtered average.
-            </p>
-          ) : null}
-          {insights.highest_role_concentration ? (
-            <p>
-              Role concentration is highest in <strong>{insights.highest_role_concentration.function_name}</strong>, where <strong>{insights.highest_role_concentration.dominant_designation}</strong> represents {insights.highest_role_concentration.dominant_designation_percentage}%.
-            </p>
-          ) : null}
-          <p>
-            The top three functions account for <strong>{insights.top_three_function_concentration.percentage}%</strong> of employees, while <strong>{insights.unclassified_records.employee_count}</strong> records are unclassified.
-          </p>
-        </div>
-      </section>
     </>
   );
 }

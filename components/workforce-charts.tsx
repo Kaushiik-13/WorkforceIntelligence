@@ -5,12 +5,12 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
+import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 
 const colors = {
   coral: "#f06449",
@@ -47,6 +47,35 @@ type CategoryDefinition = {
   key: string;
   label: string;
 };
+
+function MeasuredChart({ children }: { children: (width: number) => ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const nextWidth = Math.round(containerRef.current?.getBoundingClientRect().width ?? 0);
+      setWidth((currentWidth) => currentWidth === nextWidth ? currentWidth : nextWidth);
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    if (containerRef.current) observer?.observe(containerRef.current);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
+  return (
+    <div className="chart-area chart-tall" ref={containerRef}>
+      {width > 0 ? children(width) : null}
+    </div>
+  );
+}
 
 function CompositionTooltip({ active, payload }: TooltipContentProps) {
   if (!active || !payload?.length) return null;
@@ -99,9 +128,9 @@ function CompositionBarChart({
 
   return (
     <>
-      <div className="chart-area chart-tall">
-        <ResponsiveContainer height="100%" width="100%">
-          <BarChart data={chartData} layout="vertical" margin={{ top: 10, right: 16, bottom: 0, left: 16 }}>
+      <MeasuredChart>
+        {(width) => (
+          <BarChart data={chartData} height={292} layout="vertical" margin={{ top: 10, right: 16, bottom: 0, left: 16 }} width={width}>
             <CartesianGrid horizontal={false} stroke={colors.grid} strokeDasharray="3 5" />
             <XAxis
               {...axis}
@@ -124,8 +153,8 @@ function CompositionBarChart({
               />
             ))}
           </BarChart>
-        </ResponsiveContainer>
-      </div>
+        )}
+      </MeasuredChart>
       <div className="chart-legend centered">
         {categories.map((category) => (
           <span key={category.key}>
@@ -214,9 +243,9 @@ export function DesignationBarChart({
   }));
 
   return (
-    <div className="chart-area chart-tall">
-      <ResponsiveContainer height="100%" width="100%">
-        <BarChart data={chartData} layout="vertical" margin={{ top: 10, right: 18, bottom: 0, left: 18 }}>
+    <MeasuredChart>
+      {(width) => (
+        <BarChart data={chartData} height={292} layout="vertical" margin={{ top: 10, right: 18, bottom: 0, left: 18 }} width={width}>
           <CartesianGrid horizontal={false} stroke={colors.grid} strokeDasharray="3 5" />
           <XAxis {...axis} allowDecimals={false} domain={[0, "dataMax + 3"]} type="number" />
           <YAxis {...axis} dataKey="name" type="category" width={112} />
@@ -230,7 +259,40 @@ export function DesignationBarChart({
             ))}
           </Bar>
         </BarChart>
-      </ResponsiveContainer>
-    </div>
+      )}
+    </MeasuredChart>
+  );
+}
+
+export function FunctionDistributionBarChart({
+  data,
+}: {
+  data: { function_name: string; employee_count: number; percentage: number }[];
+}) {
+  const chartData = data.map((item) => ({
+    name: item.function_name,
+    percentage: item.percentage,
+    value: item.employee_count,
+  }));
+
+  return (
+    <MeasuredChart>
+      {(width) => (
+        <BarChart data={chartData} height={292} layout="vertical" margin={{ top: 10, right: 18, bottom: 0, left: 18 }} width={width}>
+          <CartesianGrid horizontal={false} stroke={colors.grid} strokeDasharray="3 5" />
+          <XAxis {...axis} allowDecimals={false} domain={[0, "dataMax + 4"]} type="number" />
+          <YAxis {...axis} dataKey="name" type="category" width={92} />
+          <Tooltip content={DistributionTooltip} cursor={{ fill: "rgba(40, 75, 99, 0.05)" }} />
+          <Bar animationDuration={420} dataKey="value" radius={[0, 7, 7, 0]}>
+            {chartData.map((item, index) => (
+              <Cell
+                fill={[colors.coral, colors.navy, colors.green, colors.yellow][index % 4]}
+                key={item.name}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      )}
+    </MeasuredChart>
   );
 }
