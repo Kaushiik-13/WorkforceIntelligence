@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarDays, RotateCcw } from "lucide-react";
+import { AlertTriangle, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
 
@@ -189,6 +189,11 @@ export default async function LifecyclePage({ searchParams }: { searchParams: Se
     { label: "10 years", value: kpis.retirement_exposure_10_years },
     { label: "15 years", value: kpis.retirement_exposure_15_years },
   ];
+  const selectedExposure = lifecycle.employee_lists.retirement_exposed.length;
+  const selectedExposureRate = counts.filtered_records
+    ? Number((selectedExposure * 100 / counts.filtered_records).toFixed(1))
+    : 0;
+  const firstExposureCheckpoint = horizonMetrics.find((metric) => metric.value > 0);
   const functionExposure = lifecycle.retirement_by_function.map((item) => ({
     ...item,
     name: item.function_name,
@@ -255,49 +260,67 @@ export default async function LifecyclePage({ searchParams }: { searchParams: Se
         ) : null}
       </form>
 
-      <section className="lifecycle-planning-note">
-        <div className="lifecycle-note-heading">
-          <div>
-            <span>Lifecycle planning note</span>
-            <h2>{largestFunction ? `${largestFunction.function_name} carries the largest ${selectedHorizon}-year exposure` : `No retirement exposure within ${selectedHorizon} years`}</h2>
+      <section className="lifecycle-story-bento">
+        <article className="lifecycle-outlook-card">
+          <header>
+            <span>Retirement outlook</span>
+            <b>{selectedHorizon}-year planning view</b>
+          </header>
+          <div className="lifecycle-outlook-lead">
+            <strong>{selectedExposure}</strong>
+            <div>
+              <h2>employees enter the selected retirement horizon</h2>
+              <p><b>{selectedExposureRate}%</b> of the {counts.filtered_records} employees currently in scope.</p>
+            </div>
           </div>
-          <CalendarDays aria-hidden="true" size={22} />
-        </div>
-        <div className="lifecycle-note-copy">
-          <p>
-            {largestFunction ? <><strong>{largestFunction.exposed_count} employees</strong> in {largestFunction.function_name} fall inside the selected horizon, representing <strong>{largestFunction.exposed_rate}%</strong> of that function.</> : <>No employee retirement dates fall inside the selected planning horizon.</>}
-            {highestRateFunction ? <> The highest proportional exposure is <strong>{highestRateFunction.function_name} at {highestRateFunction.exposed_rate}%</strong>.</> : null}
-          </p>
-          <p>
-            {largestCohort ? <>The largest joining cohort is <strong>{largestCohort.joining_year}</strong> with <strong>{largestCohort.employee_count} employees</strong>. </> : null}
-            <strong>{kpis.service_milestones} employees</strong> reach a 5-, 10-, 15- or 20-year milestone in {selectedYear}, while <strong>{kpis.lifecycle_anomaly_records} records</strong> need lifecycle-date review.
-          </p>
-        </div>
-      </section>
+          <div className="lifecycle-outlook-story">
+            <p>
+              {largestFunction ? <><strong>{largestFunction.function_name}</strong> has the largest exposed count at <strong>{largestFunction.exposed_count}</strong>.</> : <>There is no retirement exposure inside this horizon.</>}
+            </p>
+            <p>
+              {highestRateFunction ? <><strong>{highestRateFunction.function_name}</strong> has the highest proportional exposure at <strong>{highestRateFunction.exposed_rate}%</strong>.</> : <>No proportional exposure is present.</>}
+            </p>
+          </div>
+          <div className="lifecycle-outlook-timeline" aria-label="Cumulative retirement exposure checkpoints">
+            {horizonMetrics.map((metric) => (
+              <div key={metric.label}>
+                <span />
+                <strong>{metric.value}</strong>
+                <small>{metric.label}</small>
+              </div>
+            ))}
+          </div>
+          <footer>
+            <span>Planning read</span>
+            <p>{firstExposureCheckpoint ? `The first non-zero checkpoint appears within ${firstExposureCheckpoint.label}.` : "No retirement exposure appears in the standard 15-year checkpoints."}</p>
+          </footer>
+        </article>
 
-      <section className="lifecycle-kpi-board">
-        <article><span>Average age</span><strong>{displayNumber(kpis.average_age, " yrs")}</strong><p>Completed age at the as-of date</p></article>
-        <article><span>Average tenure</span><strong>{displayNumber(kpis.average_tenure, " yrs")}</strong><p>Completed service at the as-of date</p></article>
-        <article><span>Average joining age</span><strong>{displayNumber(kpis.average_age_at_joining, " yrs")}</strong><p>Based on {kpis.valid_joining_age_records} valid records</p></article>
-        <article><span>Expected retirement age</span><strong>{displayNumber(kpis.average_expected_retirement_age, " yrs")}</strong><p>Derived from birth and retirement dates</p></article>
-      </section>
+        <article className="lifecycle-age-story">
+          <header><span>Age span</span><small>As of {formatDate(lifecycle.as_of_date)}</small></header>
+          <div className="lifecycle-age-values">
+            <div><strong>{displayNumber(kpis.average_age)}</strong><span>Average age</span></div>
+            <i />
+            <div><strong>{displayNumber(kpis.average_expected_retirement_age)}</strong><span>Expected retirement age</span></div>
+          </div>
+          <div className="lifecycle-age-track" aria-hidden="true"><span /><i /></div>
+          <p>About <strong>{kpis.average_age !== null && kpis.average_expected_retirement_age !== null ? Number((kpis.average_expected_retirement_age - kpis.average_age).toFixed(1)) : "—"} years</strong> separate today&apos;s average age and expected retirement age.</p>
+        </article>
 
-      <Panel
-        badge={`${kpis.retirement_exposure_15_years} within 15 years`}
-        className="lifecycle-horizon-panel"
-        subtitle="Cumulative employee counts from the shared as-of date"
-        title="Retirement exposure checkpoints"
-      >
-        <div className="lifecycle-horizon-strip">
-          {horizonMetrics.map((metric) => (
-            <article key={metric.label}>
-              <span>Within {metric.label}</span>
-              <strong>{metric.value}</strong>
-              <small>{counts.filtered_records ? Number((metric.value * 100 / counts.filtered_records).toFixed(1)) : 0}% of this view</small>
-            </article>
-          ))}
-        </div>
-      </Panel>
+        <article className="lifecycle-service-story">
+          <span>Service depth</span>
+          <strong>{displayNumber(kpis.average_tenure)}</strong>
+          <p>average completed years of service</p>
+          <footer><b>{kpis.service_milestones}</b><span>major milestones in {selectedYear}</span></footer>
+        </article>
+
+        <article className="lifecycle-confidence-story">
+          <header><span>Joining-age confidence</span><b>{kpis.valid_joining_age_records}/{counts.filtered_records} valid</b></header>
+          <div><strong>{displayNumber(kpis.average_age_at_joining)}</strong><span>Average valid joining age</span></div>
+          <p><b>{kpis.lifecycle_anomaly_records} records</b> are kept outside this average and remain available for review.</p>
+          {largestCohort ? <small>Largest cohort: <strong>{largestCohort.joining_year}</strong> · {largestCohort.employee_count} employees</small> : null}
+        </article>
+      </section>
 
       <section className="lifecycle-primary-grid">
         <Panel subtitle="Completed age at the shared as-of date" title="Age profile">
