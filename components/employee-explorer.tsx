@@ -36,26 +36,10 @@ type EmployeeForm = {
   retirement_date: string;
 };
 
-type Filters = {
-  employeeGroup: string;
-  functionName: string;
-  gender: string;
-  location: string;
-  search: string;
-};
-
 type EmployeeResponse = { data: Employee[]; total: number };
 type EmployeeMutationResponse = { data: Employee };
 
 const pageSize = 10;
-
-const emptyFilters: Filters = {
-  employeeGroup: "",
-  functionName: "",
-  gender: "",
-  location: "",
-  search: "",
-};
 
 const emptyEmployeeForm: EmployeeForm = {
   birth_date: "",
@@ -117,28 +101,6 @@ async function responsePayload<T extends object>(response: Response) {
   return payload as T;
 }
 
-function FilterSelect({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: string[];
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="workforce-filter-control">
-      <span>{label}</span>
-      <select onChange={(event) => onChange(event.target.value)} value={value}>
-        <option value="">All</option>
-        {options.map((option) => <option key={option} value={option}>{option}</option>)}
-      </select>
-    </label>
-  );
-}
-
 function FormField({
   label,
   name,
@@ -174,9 +136,7 @@ function FormField({
 }
 
 export function EmployeeExplorer() {
-  const [appliedFilters, setAppliedFilters] = useState<Filters>(emptyFilters);
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
-  const [draftFilters, setDraftFilters] = useState<Filters>(emptyFilters);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -186,6 +146,7 @@ export function EmployeeExplorer() {
   const [notice, setNotice] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
   const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {
@@ -222,36 +183,19 @@ export function EmployeeExplorer() {
   }), [employees]);
 
   const filteredEmployees = useMemo(() => {
-    const search = appliedFilters.search.trim().toLocaleLowerCase();
+    const normalizedSearch = search.trim().toLocaleLowerCase();
     return employees.filter((employee) => {
-      const matchesSearch = !search
-        || employee.personnel_number?.toLocaleLowerCase().includes(search)
-        || employee.designation?.toLocaleLowerCase().includes(search);
-      return matchesSearch
-        && (!appliedFilters.functionName || employee.function_name === appliedFilters.functionName)
-        && (!appliedFilters.location || employee.location_name === appliedFilters.location)
-        && (!appliedFilters.employeeGroup || employee.employee_group === appliedFilters.employeeGroup)
-        && (!appliedFilters.gender || employee.gender_key === appliedFilters.gender);
+      return !normalizedSearch
+        || employee.personnel_number?.toLocaleLowerCase().includes(normalizedSearch)
+        || employee.designation?.toLocaleLowerCase().includes(normalizedSearch);
     });
-  }, [appliedFilters, employees]);
+  }, [employees, search]);
 
   const pageCount = Math.max(1, Math.ceil(filteredEmployees.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const pageEmployees = filteredEmployees.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const firstRecord = filteredEmployees.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const lastRecord = Math.min(currentPage * pageSize, filteredEmployees.length);
-
-  function applyFilters(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setPage(1);
-    setAppliedFilters(draftFilters);
-  }
-
-  function resetFilters() {
-    setDraftFilters(emptyFilters);
-    setAppliedFilters(emptyFilters);
-    setPage(1);
-  }
 
   function openCreate() {
     setEditingEmployee(null);
@@ -322,29 +266,22 @@ export function EmployeeExplorer() {
 
   return (
     <>
-      <form className="workforce-filter-form employee-filter-form" onSubmit={applyFilters}>
+      <section className="workforce-filter-form employee-filter-form">
         <div className="workforce-filter-heading">
           <div>
             <strong>Find employee records</strong>
-            <span>Search by personnel number or designation, then narrow the results.</span>
+            <span>Search by personnel number or designation.</span>
           </div>
           <p><strong>{filteredEmployees.length}</strong> records found</p>
         </div>
         <div className="employee-filter-grid">
           <label className="employee-search-control">
             <span>Search</span>
-            <div><Search aria-hidden="true" size={14} /><input onChange={(event) => setDraftFilters((current) => ({ ...current, search: event.target.value }))} placeholder="Personnel number or designation" value={draftFilters.search} /></div>
+            <div><Search aria-hidden="true" size={14} /><input onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Personnel number or designation" value={search} /></div>
           </label>
-          <FilterSelect label="Function" onChange={(value) => setDraftFilters((current) => ({ ...current, functionName: value }))} options={filterOptions.functions} value={draftFilters.functionName} />
-          <FilterSelect label="Location" onChange={(value) => setDraftFilters((current) => ({ ...current, location: value }))} options={filterOptions.locations} value={draftFilters.location} />
-          <FilterSelect label="Employee group" onChange={(value) => setDraftFilters((current) => ({ ...current, employeeGroup: value }))} options={filterOptions.employee_groups} value={draftFilters.employeeGroup} />
-          <FilterSelect label="Gender" onChange={(value) => setDraftFilters((current) => ({ ...current, gender: value }))} options={filterOptions.genders} value={draftFilters.gender} />
-          <div className="workforce-filter-actions">
-            <button className="action-button primary" type="submit">Apply</button>
-            <button className="action-button" onClick={resetFilters} type="button"><RotateCcw aria-hidden="true" size={13} />Reset</button>
-          </div>
+          {search ? <button className="action-button" onClick={() => { setSearch(""); setPage(1); }} type="button"><RotateCcw aria-hidden="true" size={13} />Clear search</button> : null}
         </div>
-      </form>
+      </section>
 
       <section className="panel employee-panel">
         <div className="panel-header employee-panel-header">
