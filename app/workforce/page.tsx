@@ -71,10 +71,6 @@ type WorkforceComposition = {
     employee_count: number;
     function_name: string;
   }[];
-  code_distributions: (CountShare & {
-    code_type: string;
-    code_value: string;
-  })[];
   composition_completeness: {
     field_name: string;
     missing_count: number;
@@ -182,7 +178,6 @@ export default async function WorkforcePage({ searchParams }: { searchParams: Se
     0,
     ...workforce.function_location_matrix.map((item) => item.employee_count),
   );
-  const codeGroups = Map.groupBy(workforce.code_distributions, (item) => item.code_type);
 
   return (
     <>
@@ -427,28 +422,6 @@ export default async function WorkforcePage({ searchParams }: { searchParams: Se
           </div>
         </section>
       </section>
-
-      <Panel
-        className="workforce-code-panel"
-        subtitle="Source-code categories are descriptive until business definitions are confirmed"
-        title="Workforce code distributions"
-      >
-        <div className="workforce-code-grid">
-          {[...codeGroups.entries()].map(([codeType, rows]) => (
-            <article key={codeType}>
-              <h3>{codeType}</h3>
-              {rows.map((row) => (
-                <div className="workforce-code-row" key={`${row.code_type}-${row.code_value}`}>
-                  <span>{row.code_value}</span>
-                  <i><b style={{ width: `${row.percentage}%` }} /></i>
-                  <strong>{row.employee_count}</strong>
-                  <small>{row.percentage}%</small>
-                </div>
-              ))}
-            </article>
-          ))}
-        </div>
-      </Panel>
 
     </>
   );

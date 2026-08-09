@@ -300,16 +300,6 @@ h1, h2, h3, p { margin: 0; }
 .workforce-heatmap-row span:hover { box-shadow: 0 7px 18px rgba(30,44,48,.12); transform: translateY(-2px); }
 .workforce-role-table { min-width: 590px; }
 .workforce-role-table td:first-child { color: var(--ink); }
-.workforce-code-panel { margin-bottom: 16px; }
-.workforce-code-grid { display: grid; gap: 22px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 19px; }
-.workforce-code-grid article { min-width: 0; }
-.workforce-code-grid h3 { border-bottom: 1px solid var(--grid); font-family: var(--font-manrope), Manrope, sans-serif; font-size: 11px; font-weight: 650; margin-bottom: 8px; padding-bottom: 8px; }
-.workforce-code-row { align-items: center; display: grid; gap: 7px; grid-template-columns: minmax(72px, 1fr) minmax(50px, 1.2fr) 24px 34px; min-height: 28px; }
-.workforce-code-row > span { color: #626966; font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.workforce-code-row > i { background: #e9e6e0; border-radius: 99px; display: block; height: 5px; overflow: hidden; }
-.workforce-code-row > i b { background: var(--navy); border-radius: inherit; display: block; height: 100%; }
-.workforce-code-row > strong { font-size: 9px; text-align: right; }
-.workforce-code-row > small { color: #92958f; font-size: 8px; text-align: right; }
 .workforce-insight-brief { height: 100%; margin-top: 0; max-width: none; }
 .workforce-insight-copy { border-top: 1px solid var(--grid); display: grid; gap: 12px; grid-template-columns: 1fr; margin-top: 15px; padding-top: 15px; }
 .workforce-insight-copy p { color: #6f7671; font-size: 10px; line-height: 1.65; }
@@ -462,7 +452,6 @@ h1, h2, h3, p { margin: 0; }
   .metric-grid-four, .metric-grid-six, .metric-grid-eight { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .overview-primary-grid, .overview-secondary-grid, .organization-primary-grid, .organization-secondary-grid, .quality-summary-grid, .import-grid { grid-template-columns: 1fr; }
   .workforce-filter-grid { grid-template-columns: repeat(3, minmax(120px, 1fr)); }
-  .workforce-code-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lifecycle-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .lifecycle-trend, .demo-panel { max-width: 100%; }
 }
@@ -511,7 +500,7 @@ h1, h2, h3, p { margin: 0; }
   .workforce-filter-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .workforce-kpi-bento, .workforce-primary-grid, .workforce-secondary-grid, .workforce-detail-grid { grid-template-columns: 1fr; }
   .workforce-kpi-bento .metric-card { grid-column: 1 / -1 !important; }
-  .workforce-code-grid, .workforce-insight-copy { grid-template-columns: 1fr; }
+  .workforce-insight-copy { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
