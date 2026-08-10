@@ -9,10 +9,7 @@ An interactive HR workforce analytics and employee-data management proof of conc
 
 The application turns static spreadsheet data into governed workforce metrics, responsive visualizations, lifecycle analysis, employee CRUD workflows, and validated Excel/CSV imports.
 
-**[View the live demo](https://workforce-intelligence-three.vercel.app/)** · **[Read the implementation plan](./IMPLEMENTATION_PLAM.md)**
-
-> [!IMPORTANT]
-> This repository is a proof of concept using dummy employee data. Authentication and role-based authorization are not yet implemented. Do not use the current deployment with real employee or personally identifiable information.
+**[View the live demo](https://workforce-intelligence-three.vercel.app/)** 
 
 ## Why this project exists
 
